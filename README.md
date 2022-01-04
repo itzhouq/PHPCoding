@@ -1,3 +1,7 @@
+---
+typora-copy-images-to: upload
+---
+
 ## 环境搭建
 
 PHP 官网：https://www.php.net
@@ -1315,3 +1319,1067 @@ try {
     $conn -> commit();
     echo "新记录插入成功";
 } catch (PDOException $e) {
+    // 如果执行失败回滚
+    $conn -> rollback();
+    $sql = "";
+    echo $sql . "<br>" . $e -> getMessage();
+}
+
+$conn = null;
+```
+
+
+
+### PHP MySQL 预处理语句
+
+预处理语句用于执行多个相同的 SQL 语句，并且执行效率更高。预处理语句的工作原理如下：
+
+1. 预处理：创建 SQL 语句模板并发送到数据库。预留的值使用参数 "?" 标记 。例如：
+
+```sql
+INSERT INTO t_guests (firstname, lastname, email) VALUES(?, ?, ?)
+```
+
+2. 数据库解析，编译，对SQL语句模板执行查询优化，并存储结果不输出。
+2. 执行：最后，将应用绑定的值传递给参数（"?" 标记），数据库执行语句。应用可以多次执行语句，如果参数的值不一样。
+
+相比于直接执行SQL语句，预处理语句有两个主要优点：
+
+- 绑定参数减少了服务器带宽，你只需要发送查询的参数，而不是整个语句。
+- 预处理语句大大减少了分析时间，只做了一次查询（虽然语句多次执行）。
+
+```php
+$servername = "localhost";
+$username = "root";
+$password = "123456";
+$dbname = "test";
+
+try {
+    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+    // 设置 PDO 错误模式为异常
+    $conn -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // 预处理 SQL 并绑定参数
+    $stmt = $conn -> prepare("INSERT INTO t_guests (firstname, lastname, email) 
+    VALUES (:firstname, :lastname, :email)");
+    $stmt -> bindParam(':firstname', $firstname);
+    $stmt -> bindParam(':lastname', $lastname);
+    $stmt -> bindParam(':email', $email);
+
+    // 插入行
+    $firstname = "John";
+    $lastname = "Doe";
+    $email = "john@example.com";
+    $stmt -> execute();
+
+    // 插入其他行
+    $firstname = "Mary";
+    $lastname = "Moe";
+    $email = "mary@example.com";
+    $stmt -> execute();
+
+    // 插入其他行
+    $firstname = "Julie";
+    $lastname = "Dooley";
+    $email = "julie@example.com";
+    $stmt -> execute();
+
+    echo "新记录插入成功";
+} catch (PDOException $e) {
+    echo "Error: " . $e -> getMessage();
+}
+$conn = null;
+```
+
+
+
+### PHP MySQL 读取数据
+
+```php
+echo "<table style='border: solid 1px black;'>";
+echo "<tr><th>Id</th><th>Firstname</th><th>Lastname</th></tr>";
+
+class TableRows extends RecursiveIteratorIterator {
+    function __construct($it) {
+        parent ::__construct($it, self::LEAVES_ONLY);
+    }
+
+    function current() {
+        return "<td style='width:150px;border:1px solid black;'>" . parent ::current() . "</td>";
+    }
+
+    function beginChildren() {
+        echo "<tr>";
+    }
+
+    function endChildren() {
+        echo "</tr>" . "\n";
+    }
+}
+
+$servername = "localhost";
+$username = "root";
+$password = "123456";
+$dbname = "test";
+
+try {
+    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+    $conn -> setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $stmt = $conn -> prepare("SELECT id, firstname, lastname FROM t_guests");
+    $stmt -> execute();
+
+    // 设置结果集为关联数组
+    $result = $stmt -> setFetchMode(PDO::FETCH_ASSOC);
+    foreach (new TableRows(new RecursiveArrayIterator($stmt -> fetchAll())) as $k => $v) {
+        echo $v;
+    }
+} catch (PDOException $e) {
+    echo "Error: " . $e -> getMessage();
+}
+$conn = null;
+echo "</table>";
+```
+
+- 首先，我们设置了 SQL 语句从 t_guests 数据表中读取 id, firstname 和 lastname 三个字段。之后我们使用该 SQL 语句从数据库中取出结果集并赋给复制给变量 $result。
+
+- 函数 num_rows() 判断返回的数据。
+
+- 如果返回的是多条数据，函数 fetch_assoc() 将结合集放入到关联数组并循环输出。 while() 循环出结果集，并输出 id, firstname 和 lastname 三个字段值。
+
+
+
+---
+
+## PHP包含
+
+在 PHP 中，您可以在服务器执行 PHP 文件之前在该文件中插入一个文件的内容。include 和 require 语句用于在执行流中插入写在其他文件中的有用的代码。
+
+### 包含语法
+
+```php
+include 'filename';
+// 或者
+require 'filename';
+```
+
+
+
+### 实例1
+
+假设您有一个标准的页头文件，名为 "header.php"。如需在页面中引用这个页头文件，请使用 include/require：
+
+```php
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>测试包含</title>
+</head>
+<body>
+
+<?php include 'header.php'; ?>
+<h1>欢迎来到我的主页!</h1>
+<p>一些文本。</p>
+
+</body>
+</html>
+```
+
+
+
+### 实例2
+
+假设我们有一个在所有页面中使用的标准菜单文件。"menu.php":
+
+```php
+echo '<a href="/">主页</a>
+<a href="/html">HTML 教程</a>
+<a href="/php">PHP 教程</a>';
+```
+
+网站中的所有页面均应引用该菜单文件。以下是具体的做法：
+
+```php
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>引入菜单</title>
+</head>
+<body>
+
+<div class="leftmenu">
+    <?php include 'menu.php'; ?>
+</div>
+<h1>欢迎来到我的主页!</h1>
+<p>一些文本。</p>
+
+</body>
+</html>
+```
+
+
+
+### 实例3
+
+假设我们有一个定义变量的包含文件（"vars.php"）：
+
+```php
+<?php
+$color='red';
+$car='BMW';
+```
+
+这些变量可用在调用文件中：
+
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>引入变量</title>
+</head>
+<body>
+
+<h1>欢迎来到我的主页!</h1>
+<?php
+include 'vars.php';
+echo "I have a $color $car"; // I have a red BMW
+?>
+
+</body>
+</html>
+```
+
+
+
+### include 和 require 的区别
+
+- require 一般放在 PHP 文件的最前面，程序在执行前就会先导入要引用的文件；
+- include 一般放在程序的流程控制中，当程序执行时碰到才会引用，简化程序的执行流程。
+
+- require 引入的文件有错误时，执行会中断，并返回一个致命错误；
+- include 引入的文件有错误时，会继续执行，并返回一个警告。
+
+
+
+---
+
+## 命名空间
+
+### 命名空间概述
+
+- 命名空间是一种封装事物的方法，是一种抽象的概念。
+- 类似操作系统中目录的组织方式：比如有个文件 `foo.txt`可以同时存在目录`/home/greg` 和目录 `/home/other` 中。这里使用目录将相关文件分组，起到了命名空间的作用。
+- 在目录 `/home/grep` 之外访问 `foo.txt`文件时，需要将目录名和目录分隔符放在文件名之前得到 `/home/grep/foo.txt`。
+
+- 命令空间的两个作用：处理重名和简化命名
+
+```php
+namespace my\name; // 定义命名空间
+
+class MyClass {}
+function myfunction() {}
+const MYCONST = 1;
+
+$a = new MyClass;
+$c = new \my\name\MyClass; // 全局命名空间
+```
+
+> 命名空间名称大小写不敏感。名为 `PHP` 的命名空间，以及以这些名字开头的命名空间 （例如 `PHP\Classes`）被保留用作语言内核使用， 而不应该在用户空间的代码中使用。
+
+- 完全限定名称：以反斜杠开头
+
+- 受命名空间影响的类型：类、接口、函数、常量。
+
+
+
+### 定义命名空间
+
+```php
+namespace MyProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+```
+
+
+
+### 定义子命名空间
+
+与目录和文件的关系很象，PHP 命名空间也允许指定层次化的命名空间的名称。因此，命名空间的名字可以使用分层次的方式定义：
+
+```php
+namespace MyProject\Sub\Level;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+```
+
+上面的例子创建了常量 `MyProject\Sub\Level\CONNECT_OK`，类 `MyProject\Sub\Level\Connection` 和函数 `MyProject\Sub\Level\connect`。
+
+
+
+### 在同一个文件中定义多个命名空间
+
+也可以在同一个文件中定义多个命名空间。在同一个文件中定义多个命名空间有两种语法形式。
+
+```php
+namespace MyProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+
+namespace AnotherProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+```
+
+不建议使用这种语法在单个文件中定义多个命名空间。建议使用下面的大括号形式的语法。
+
+```php
+namespace MyProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+
+namespace AnotherProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+```
+
+将全局的非命名空间中的代码与命名空间中的代码组合在一起，只能使用大括号形式的语法。全局代码必须用一个不带名称的 namespace 语句加上大括号括起来，例如：
+
+```php
+namespace MyProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+
+// 全局代码
+session_start();
+$a = MyProject\connect();
+echo MyProject\Connection::start();
+```
+
+
+
+### 使用命名空间：基础
+
+在讨论如何使用命名空间之前，必须了解 PHP 是如何知道要使用哪一个命名空间中的元素的。可以将 PHP 命名空间与文件系统作一个简单的类比。在文件系统中访问一个文件有三种方式：
+
+1. 相对文件名形式如 `foo.txt`。它会被解析为 `currentdirectory/foo.txt`，其中 currentdirectory 表示当前目录。因此如果当前目录是 `/home/foo`，则该文件名被解析为 `/home/foo/foo.txt`。
+2. 相对路径名形式如 `subdirectory/foo.txt`。它会被解析为 `currentdirectory/subdirectory/foo.txt`。
+3. 绝对路径名形式如 `/main/foo.txt`。它会被解析为 `/main/foo.txt`。
+
+PHP 命名空间中的元素使用同样的原理。例如，类名可以通过三种方式引用：
+
+1. 非限定名称，或不包含前缀的类名称，例如 `$a=new foo();` 或 `foo::staticmethod();`。如果当前命名空间是 `currentnamespace`，foo 将被解析为 `currentnamespace\foo`。如果使用 foo 的代码是全局的，不包含在任何命名空间中的代码，则 foo 会被解析为 `foo`。 警告：如果命名空间中的函数或常量未定义，则该非限定的函数名称或常量名称会被解析为全局函数名称或常量名称。
+2. 限定名称,或包含前缀的名称，例如 `$a = new subnamespace\foo();` 或 `subnamespace\foo::staticmethod();`。如果当前的命名空间是 `currentnamespace`，则 foo 会被解析为 `currentnamespace\subnamespace\foo`。如果使用 foo 的代码是全局的，不包含在任何命名空间中的代码，foo 会被解析为 `subnamespace\foo`。
+3. 完全限定名称，或包含了全局前缀操作符的名称，例如， `$a = new \currentnamespace\foo();` 或 `\currentnamespace\foo::staticmethod();`。在这种情况下，foo 总是被解析为代码中的文字名(literal name)`currentnamespace\foo`。
+
+下面是一个使用这三种方式的实例：
+
+file1.php
+
+```php
+namespace Foo\Bar\subnamespace;
+
+const FOO = 1;
+function foo() {
+    return 'foo_function1';
+}
+
+class foo {
+    static function staticmethod() {
+        echo 'foo_static_method1';
+    }
+}
+```
+
+file2.php
+
+```php
+namespace Foo\Bar;
+include 'file1.php';
+
+const FOO = 2;
+function foo() {
+    return 'foo_function2';
+}
+
+class foo {
+    static function staticmethod() {
+        echo "foo_static_method2";
+    }
+}
+
+/* 非限定名 */
+//echo FOO;
+//echo foo();
+//foo::staticmethod();
+
+/* 限定名称 */
+//echo subnamespace\FOO;
+//echo subnamespace\foo();
+//subnamespace\foo::staticmethod();
+
+
+/* 完全限定名称 */
+echo \Foo\Bar\FOO;
+echo \Foo\Bar\foo();
+echo \Foo\Bar\subnamespace\foo();
+```
+
+> 注意访问任意全局类、函数或常量，都可以使用完全限定名称，例如 **\strlen()** 或 **\Exception** 或 `\INI_ALL`。
+
+```php
+<?php
+// 全局类、函数和常量
+namespace Foo;
+
+function strlen() {
+return 'strlen() function';
+}
+const INI_ALL = 3;
+class Exception {
+
+}
+
+$a = strlen('hi'); // 调用此命名空间的strlen
+$b = \strlen('hi'); // 调用全局函数strlen
+$c = INI_ALL; // 访问此命名空间常量 INI_ALL
+$d = \INI_ALL; // 访问全局常量 INI_ALL
+$e = new Exception('error'); // 实例化此命名空间的 Exception
+$f = new \Exception('error'); // 实例化全局类 Exception
+
+echo $a . PHP_EOL; // strlen() function
+echo $b . PHP_EOL; // 2
+
+echo $c . PHP_EOL; // 3
+echo $d . PHP_EOL; // 7
+
+$e;
+$f;
+```
+
+
+
+- 同一个命名空间可以定义在多个文件中，即允许将同一个命名空间的内容分割存放在不同的文件中。
+
+```php
+namespace test1\test2;
+
+function fun1() {
+    return 'fun1 invoke';
+}
+```
+
+```php
+namespace test1\test2;
+
+function fun2() {
+    return 'fun2 invoke';
+}
+```
+
+```php
+include 'php1.php';
+include 'php2.php';
+
+echo test1\test2\fun1();
+echo test1\test2\fun2();
+```
+
+### 命名空间和动态语言特征
+
+- 动态访问元素
+
+```php
+<?php
+
+class classname {
+    function __construct() {
+        echo __METHOD__, "\n";
+    }
+}
+
+function funcname() {
+    echo __FUNCTION__, "\n";
+}
+const constname = "global";
+
+$a = 'classname';
+$obj = new $a; // 输出 classname::__construct
+$b = 'funcname';
+$b(); // 输出 funcname
+echo constant('constname'), "\n"; // 输出 global
+```
+
+
+
+### 使用命名空间：别名/导入
+
+通过别名引用或导入外部的完全限定名称，是命名空间的一个重要特征。PHP 可以为常量、函数、类、接口、命名空间导入或设置别名。别名是通过操作符 `use` 来实现的。下面是五种导入方式的例子：
+
+- **使用 use 操作符导入/使用别名**
+
+```php
+namespace foo;
+use My\Full\Classname as Another;
+
+// 下面的例子与 use My\Full\NSname as NSname 相同
+use My\Full\NSname;
+
+// 导入一个全局类
+use ArrayObject;
+
+// 导入函数
+use function My\Full\functionName;
+
+// 为函数设置别名
+use function My\Full\functionName as func;
+
+// 导入常量
+use const My\Full\CONSTANT;
+
+$obj = new namespace\Another; // 实例化 foo\Another 对象
+$obj = new Another; // 实例化 My\Full\Classname　对象
+NSname\subns\func(); // 调用函数 My\Full\NSname\subns\func
+$a = new ArrayObject(array(1)); // 实例化 ArrayObject 对象
+func(); // 调用函数 My\Full\functionName
+echo CONSTANT; // 输出 My\Full\CONSTANT 的值
+```
+
+
+
+- **通过 use 操作符导入/使用别名，一行中包含多个 use 语句**
+
+```php
+use My\Full\Classname as Another, My\Full\NSname;
+
+$obj = new Another; // 实例化 My\Full\Classname 对象
+NSname\subns\func(); // 调用函数 My\Full\NSname\subns\func
+```
+
+
+
+- **导入和动态名称**
+
+```php
+use My\Full\Classname as Another, My\Full\NSname;
+
+$obj = new Another; // 实例化一个 My\Full\Classname 对象
+$a = 'Another';
+$obj = new $a;      // 实际化一个 Another 对象
+```
+
+导入操作是在编译执行的，但动态的类名称、函数名称或常量名称则不是。
+
+
+
+- **导入和完全限定名称**
+
+导入操作只影响非限定名称和限定名称。完全限定名称由于是确定的，故不受导入的影响。
+
+```php
+use My\Full\Classname as Another, My\Full\NSname;
+
+$obj = new Another; // class My\Full\Classname 的实例对象
+$obj = new \Another; // class Another 的实例对象
+$obj = new Another\thing; // class My\Full\Classname\thing 的实例对象
+$obj = new \Another\thing; // class Another\thing 的实例对象
+```
+
+
+
+- `use` **声明编组**
+
+通过单个 [`use`](https://www.php.net/manual/zh/language.namespaces.importing.php) 语句，可以将来自同一个 [`namespace`](https://www.php.net/manual/zh/language.namespaces.definition.php) 的 类、函数、常量一起编组导入。
+
+```php
+use some\namespace\ClassA;
+use some\namespace\ClassB;
+use some\namespace\ClassC as C;
+
+use function some\namespace\fn_a;
+use function some\namespace\fn_b;
+use function some\namespace\fn_c;
+
+use const some\namespace\ConstA;
+use const some\namespace\ConstB;
+use const some\namespace\ConstC;
+
+// 等同于以下编组的 use 声明
+use some\namespace\{ClassA, ClassB, ClassC as C};
+use function some\namespace\{fn_a, fn_b, fn_c};
+use const some\namespace\{ConstA, ConstB, ConstC};
+```
+
+
+
+### namespace关键词和_NAMESPACE__常量
+
+访问当前命名空间内部元素的方法，**`__NAMESPACE__`** 魔术常量和 `namespace` 关键字。
+
+- **输出命名空间名称**
+
+```php
+namespace MyProject;
+
+echo '"', __NAMESPACE__, '"'; // "MyProject"
+```
+
+- **全局代码命名空间为空串**
+
+```php
+echo '"', __NAMESPACE__, '"'; // 输出 ""
+```
+
+- **使用 __NAMESPACE__ 动态创建名称**
+
+```php
+namespace MyProject;
+
+function get($classname) {
+    $a = __NAMESPACE__ . '\\' . $classname;
+    return new $a;
+}
+```
+
+- **namespace 操作符在命名空间中**
+
+```php
+namespace MyProject;
+
+use blah\blah as mine; // 参考 "使用命名空间：别名/导入"
+
+blah\mine(); // 调用函数 MyProject\blah\mine()
+namespace\blah\mine(); // 调用函数 MyProject\blah\mine()
+
+namespace\func(); // 调用函数 MyProject\func()
+namespace\sub\func(); // 调用函数 MyProject\sub\func()
+namespace\cname::method(); // 调用 class MyProject\cname 的静态方法 "method"
+$a = new namespace\sub\cname(); // class MyProject\sub\cname 的实例对象
+$b = namespace\CONSTANT; // 设置 $b 的值为常量 MyProject\CONSTANT
+```
+
+- **namespace 操作符在全局代码中**
+
+```php
+namespace\func(); // 调用函数 func()
+namespace\sub\func(); // 调用函数 sub\func()
+namespace\cname::method(); // 调用 class cname 的静态方法 "method"
+$a = new namespace\sub\cname(); // class sub\cname 的实例对象
+$b = namespace\CONSTANT; // 设置 $b 的值为常量 CONSTANT
+```
+
+
+
+### 全局空间
+
+如果没有定义任何命名空间，所有的类与函数的定义都是在全局空间，与 PHP 引入命名空间概念前一样。在名称前加上前缀 `\` 表示该名称是全局空间中的名称，即使该名称位于其它的命名空间中时也是如此。
+
+```php
+namespace A\B\C;
+
+/* 这个函数是 A\B\C\fopen */
+function fopen() { 
+     /* ... */
+     $f = \fopen(...); // 调用全局的fopen函数
+     return $f;
+} 
+```
+
+
+
+### 使用命名空间：后备全局函数/常量
+
+类的访问：类名称总是解析到当前命名空间中的名称。如果不是当前命名空间中的类必须使用完全限定类名。
+
+```php
+namespace A\B\C;
+class Exception extends \Exception {}
+
+$a = new Exception('hi'); // $a 是类 A\B\C\Exception 的一个对象
+$b = new \Exception('hi'); // $b 是类 Exception 的一个对象
+
+$c = new ArrayObject; // 致命错误, 找不到 A\B\C\ArrayObject 类
+```
+
+> 对于函数和常量来说，如果当前命名空间中不存在该函数或常量，PHP 会退而使用全局空间中的函数或常量。
+
+
+
+
+## HTML和PHP结合使用
+
+### PHP请求
+
+PHP 中的 $_GET 和 $_POST 变量用于检索表单中的信息，比如用户输入。当处理 HTML 表单时，PHP 能把来自 HTML 页面中的表单元素自动变成可供 PHP 脚本使用。
+
+form.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试表单的使用</title>
+</head>
+<body>
+<form action="welcome.php" method="get">
+    姓名: <input type="text" name="fname">
+    年龄: <input type="text" name="age">
+    <input type="submit" name="提交">
+</form>
+</body>
+</html>
+```
+
+点击按钮时发送到服务器的 URL:
+
+```
+http://localhost/PHPCode/form/welcome.php?name=mq&age=20
+```
+
+welcome.php
+
+```php
+欢迎<?php echo $_POST["fname"]; ?>!<br>
+你的年龄是 <?php echo $_POST["age"]; ?> 岁。
+```
+
+"welcome.php" 文件现在可以通过 $_GET 变量来收集表单数据了（请注意，表单域的名称会自动成为 $_GET 数组中的键）。
+
+>  HTML 表单中使用 method="get" 时，所有的变量名和值都会显示在 URL 中。所以在发送密码或其他敏感信息时，不应该使用这个方法！
+
+预定义的 $_POST 变量用于收集来自 method="post" 的表单中的值。从带有 POST 方法的表单发送的信息，对任何人都是不可见的（不会显示在浏览器的地址栏），并且对发送信息的量也没有限制。
+
+![image-20220104101335347](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104101335.png)
+
+https://www.processon.com/view/link/61d3ad5bf346fb06920556de
+
+### PHP获取下拉菜单的数据
+
+php_form_select：
+
+```php
+<?php
+$q = isset($_GET['q']) ? htmlspecialchars($_GET['q']) : '';
+if ($q) {
+    if ($q == 'BAIDU') {
+        echo '百度<br>http://www.baidu.com';
+    } else if ($q == 'GOOGLE') {
+        echo 'Google 搜索<br>http://www.google.com';
+    } else if ($q == 'TAOBAO') {
+        echo '淘宝<br>http://www.taobao.com';
+    }
+} else {
+    ?>
+    <form action="" method="get">
+        <select name="q">
+            <option value="">选择一个站点:</option>
+            <option value="BAIDU">BAIDU</option>
+            <option value="GOOGLE">Google</option>
+            <option value="TAOBAO">Taobao</option>
+        </select>
+        <input type="submit" value="提交">
+    </form>
+    <?php
+}
+?>
+```
+
+- action 属性值为空表示提交到当前脚本
+- isset：检测变量是否已声明并且其值不为 `null`
+- htmlspecialchars：将特殊字符转换为 HTML 实体
+
+
+
+### checkbox复选框
+
+```php
+<?php
+$q = isset($_POST['q']) ? $_POST['q'] : '';
+if (is_array($q)) {
+    $sites = array(
+        'BAIDU' => '百度: http://www.baidu.com',
+        'GOOGLE' => 'Google 搜索: http://www.google.com',
+        'TAOBAO' => '淘宝: http://www.taobao.com',
+    );
+    foreach ($q as $val) {
+        echo $sites[$val] . PHP_EOL;
+    }
+
+} else {
+    ?>
+    <form action="" method="post">
+        <input type="checkbox" name="q[]" value="BAIDU"> BAIDU<br>
+        <input type="checkbox" name="q[]" value="GOOGLE"> Google<br>
+        <input type="checkbox" name="q[]" value="TAOBAO"> Taobao<br>
+        <input type="submit" value="提交">
+    </form>
+    <?php
+}
+?>
+```
+
+
+
+### PHP表单验证
+
+```php
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>表单校验测试代码</title>
+    <style>
+        .error {
+            color: #FF0000;
+        }
+    </style>
+</head>
+<body>
+
+<?php
+// 定义变量并默认设置为空值
+$nameErr = $emailErr = $genderErr = $websiteErr = "";
+$name = $email = $gender = $comment = $website = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (empty($_POST["name"])) {
+        $nameErr = "名字是必需的";
+    } else {
+        $name = test_input($_POST["name"]);
+        // 检测名字是否只包含字母跟空格
+        if (!preg_match("/^[a-zA-Z ]*$/", $name)) {
+            $nameErr = "只允许字母和空格";
+        }
+    }
+
+    if (empty($_POST["email"])) {
+        $emailErr = "邮箱是必需的";
+    } else {
+        $email = test_input($_POST["email"]);
+        // 检测邮箱是否合法
+        if (!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/", $email)) {
+            $emailErr = "非法邮箱格式";
+        }
+    }
+
+    if (empty($_POST["website"])) {
+        $website = "";
+    } else {
+        $website = test_input($_POST["website"]);
+        // 检测 URL 地址是否合法
+        if (!preg_match("/\b(?:(?:https?|ftp):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i", $website)) {
+            $websiteErr = "非法的 URL 的地址";
+        }
+    }
+
+    if (empty($_POST["comment"])) {
+        $comment = "";
+    } else {
+        $comment = test_input($_POST["comment"]);
+    }
+
+    if (empty($_POST["gender"])) {
+        $genderErr = "性别是必需的";
+    } else {
+        $gender = test_input($_POST["gender"]);
+    }
+}
+
+function test_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+?>
+
+<h2>PHP 表单验证实例</h2>
+<p><span class="error">* 必需字段。</span></p>
+<form method="post" action="<?php echo htmlspecialchars($_SERVER[" PHP_SELF"]); ?>">
+    名字: <label>
+        <input type="text" name="name" value="<?php echo $name; ?>">
+    </label>
+    <span class="error">* <?php echo $nameErr; ?></span>
+    <br><br>
+    E-mail: <label>
+        <input type="text" name="email" value="<?php echo $email; ?>">
+    </label>
+    <span class="error">* <?php echo $emailErr; ?></span>
+    <br><br>
+    网址: <label>
+        <input type="text" name="website" value="<?php echo $website; ?>">
+    </label>
+    <span class="error"><?php echo $websiteErr; ?></span>
+    <br><br>
+    备注: <label>
+        <textarea name="comment" rows="5" cols="40"><?php echo $comment; ?></textarea>
+    </label>
+    <br><br>
+    性别:
+    <label>
+        <input type="radio" name="gender" <?php if (isset($gender) && $gender == "female") echo "checked"; ?>
+               value="female">
+    </label>女
+    <label>
+        <input type="radio" name="gender" <?php if (isset($gender) && $gender == "male") echo "checked"; ?>
+               value="male">
+    </label>男
+    <span class="error">* <?php echo $genderErr; ?></span>
+    <br><br>
+    <input type="submit" name="submit" value="Submit">
+</form>
+
+<?php
+echo "<h2>您输入的内容是:</h2>";
+echo $name;
+echo "<br>";
+echo $email;
+echo "<br>";
+echo $website;
+echo "<br>";
+echo $comment;
+echo "<br>";
+echo $gender;
+?>
+
+</body>
+</html>
+```
+
+- `empty()`：检查一个变量是否为空
+
+- `$_SERVER():`是一个包含了诸如头信息(header)、路径(path)、以及脚本位置(script locations)等等信息的数组。这个数组中的项目由 Web 服务器创建。
+
+```php
+<!DOCTYPE html>
+<html lang="en">
+<body>
+
+<?php
+echo $_SERVER['PHP_SELF'];
+echo "<br>";
+echo $_SERVER['SERVER_NAME'];
+echo "<br>";
+echo $_SERVER['HTTP_HOST'];
+echo "<br>";
+echo $_SERVER['HTTP_REFERER'];
+echo "<br>";
+echo $_SERVER['HTTP_USER_AGENT'];
+echo "<br>";
+echo $_SERVER['SCRIPT_NAME'];
+?>
+
+</body>
+</html>
+
+```
+
+- `$_SERVER["PHP_SELF"]`：是超级全局变量，返回当前正在执行脚本的文件名
+- `preg_match()：`用于执行一个正则表达式匹配。
+
+- `htmlspecialchars() `：把一些预定义的字符转换为 HTML 实体。
+
+
+
+### 验证必须字段
+
+$nameErr, $emailErr, $genderErr, 和 $websiteErr.。这些错误变量将显示在必需字段上。 我们还为每个$_POST变量增加了一个if else语句。 这些语句将检查 $_POST 变量是 否为空（使用php的 empty() 函数）。如果为空，将显示对应的错误信息。 如果不为空，数据将传递给test_input() 函数。
+
+
+
+### 显示错误信息
+
+在 HTML 实例表单中，我们为每个字段中添加了一些脚本， 各个脚本会在信息输入错误时显示错误信息。如果用户未填写信息就提交表单则会输出错误信息。
+
+
+
+### 验证名称和邮箱和URL
+
+检测 name 字段是否包含字母和空格，如果 name 字段值不合法，将输出错误信息。
+
+```php
+$name = test_input($_POST["name"]);
+if (!preg_match("/^[a-zA-Z ]*$/",$name)) {
+  $nameErr = "只允许字母和空格"; 
+}
+```
+
+检测 e-mail 地址是否合法。如果 e-mail 地址不合法，将输出错误信息。
+
+```php
+$email = test_input($_POST["email"]);
+if (!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$email)) {
+  $emailErr = "非法邮箱格式"; 
+}
+```
+
+检测URL地址是否合法 (以下正则表达式运行URL中含有破折号:"-")， 如果 URL 地址不合法，将输出错误信息。
+
+```PHP
+$website = test_input($_POST["website"]);
+if (!preg_match("/\b(?:(?:https?|ftp):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i",$website)) {
+  $websiteErr = "非法的 URL 的地址"; 
+}
+```
+
+
+
+
+## 日期
+
+### 时区
+
+**date_default_timezone_set()** 设定用于所有日期时间函数的默认时区。
+
+- 获取时区
+
+```php
+date_default_timezone_set('America/Los_Angeles');
+
+$script_tz = date_default_timezone_get();
+
+var_dump($script_tz);
+echo $script_tz . PHP_EOL;
+```
+
+- 上海时区：Asia/Shanghai
+- 洛杉矶时区：America/Los_Angeles
+- [支持的时区列表](https://www.php.net/manual/zh/timezones.php)
+
+
+
+### date()函数
+
+格式化本地日期和时间，并返回格式化的日期字符串：
+
+```php
+// 设置时区
+date_default_timezone_set("PRC");
+
+echo date("Y-m-d H:i:s")  . PHP_EOL;
+echo date("Y 年 m 月 d 日 H 点 i 分 s 秒")  . PHP_EOL;
+$time = strtotime("2018-01-18 08:08:08");  // 将指定日期转成时间戳
+echo date("Y-m-d H:i:s", $time)  . PHP_EOL;
+```
+
+- PRC：People’s Republic of China，中华人民共和国，也就是日期使用中国的时区。
+
+
