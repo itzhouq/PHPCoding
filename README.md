@@ -1,7 +1,3 @@
----
-typora-copy-images-to: upload
----
-
 ## 环境搭建
 
 PHP 官网：https://www.php.net
@@ -2139,7 +2135,7 @@ if (is_array($q)) {
 
 ### PHP表单验证
 
-```php
+```php+HTML
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
@@ -2268,7 +2264,7 @@ echo $gender;
 
 - `$_SERVER():`是一个包含了诸如头信息(header)、路径(path)、以及脚本位置(script locations)等等信息的数组。这个数组中的项目由 Web 服务器创建。
 
-```php
+```php+HTML
 <!DOCTYPE html>
 <html lang="en">
 <body>
@@ -2381,5 +2377,808 @@ echo date("Y-m-d H:i:s", $time)  . PHP_EOL;
 ```
 
 - PRC：People’s Republic of China，中华人民共和国，也就是日期使用中国的时区。
+
+
+
+### 字符串转日期
+
+strtotime  将任何字符串的日期时间描述解析为 Unix 时间戳。
+
+```php
+strtotime(string $datetime, int $now = time()): int
+```
+
+datetime 日期/时间字符串。now 用来计算返回值的时间戳。
+
+接收一个包含美国英语日期格式的字符串并尝试将其解析为 Unix 时间戳（自 January 1 1970 00:00:00 UTC 起的秒数），其值相对于 `now` 参数给出的时间，如果没有提供 `now` 参数则用系统当前时间。
+
+```php
+echo strtotime("now"), "\n";
+echo strtotime("10 September 2000"), "\n";
+echo strtotime("+1 day"), "\n";
+echo strtotime("+1 week"), "\n";
+echo strtotime("+1 week 2 days 4 hours 2 seconds"), "\n";
+echo strtotime("next Thursday"), "\n";
+echo strtotime("last Monday"), "\n";
+```
+
+
+
+---
+
+## PHP文件
+
+### 打开文件
+
+fopen() 函数用于在 PHP 中打开文件。此函数的第一个参数含有要打开的文件的名称，第二个参数规定了使用哪种模式来打开文件：
+
+```php
+<html lang="en">
+<body>
+
+<?php
+$file = fopen("welcome.txt", "r");
+echo $file;
+?>
+
+</body>
+</html>
+```
+
+没有这个文件什么都不显示。创建文件后显示文件的 id。
+
+文件可能通过下列模式来打开：
+
+| 模式 | 描述                                                         |
+| :--- | :----------------------------------------------------------- |
+| r    | 只读。在文件的开头开始。                                     |
+| r+   | 读/写。在文件的开头开始。                                    |
+| w    | 只写。打开并清空文件的内容；如果文件不存在，则创建新文件。   |
+| w+   | 读/写。打开并清空文件的内容；如果文件不存在，则创建新文件。  |
+| a    | 追加。打开并向文件末尾进行写操作，如果文件不存在，则创建新文件。 |
+| a+   | 读/追加。通过向文件末尾写内容，来保持文件内容。              |
+| x    | 只写。创建新文件。如果文件已存在，则返回 FALSE 和一个错误。  |
+| x+   | 读/写。创建新文件。如果文件已存在，则返回 FALSE 和一个错误。 |
+
+> 如果 fopen() 函数无法打开指定文件，则返回 0 (false)。
+
+如果 fopen() 函数不能打开指定的文件，下面的实例会生成一段消息：
+
+```php
+<html lang="en">
+<body>
+
+<?php
+$file = fopen("welcome.txt", "r") or exit("Unable to open file!");
+?>
+
+</body>
+</html>
+```
+
+```
+Unable to open file!
+```
+
+
+
+### 关闭文件
+
+fclose() 函数用于关闭打开的文件，闭一个已打开的文件指针。
+
+```php
+<?php
+$file = fopen("test.txt", "r");
+
+//执行一些代码
+
+fclose($file);
+```
+
+> 为什么要释放文件句柄？
+>
+> 因为文件在打开之后，如果不关闭并释放文件句柄，就有可问能会导致其它程序不能打开这个文件。
+
+
+
+### 检测文件末尾
+
+feof() 函数检测是否已到达文件末尾（EOF）。
+
+在循环遍历未知长度的数据时，feof() 函数很有用。
+
+> 在 w 、a 和 x 模式下，您无法读取打开的文件！
+
+```php
+if (feof($file)) echo "文件结尾";
+```
+
+
+
+### 逐行读取文件
+
+fgets() 函数用于从文件中逐行读取文件。
+
+> 在调用该函数之后，文件指针会移动到下一行。
+
+```php
+<?php
+$file = fopen("welcome.txt", "r") or exit("无法打开文件!");
+// 读取文件每一行，直到文件结尾
+while (!feof($file)) {
+    echo fgets($file) . "<br>";
+}
+echo '文件尾部';
+fclose($file);
+```
+
+逐行读取文件，直到文件末尾为止。
+
+---
+
+
+
+## 文件上传
+
+`$_FILES`HTTP 文件上传变量，包含有所有上传的文件信息。
+
+form.html：
+
+```php+HTML
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>文件上传</title>
+</head>
+<body>
+
+<form action="upload_file.php" method="post" enctype="multipart/form-data">
+    <label for="file">文件名：</label>
+    <input type="file" name="file" id="file"><br>
+    <input type="submit" name="submit" value="提交">
+</form>
+
+</body>
+</html>
+```
+
+>**<form>** 标签的 **enctype** 属性规定了在提交表单时要使用哪种内容类型。在表单需要二进制数据时，比如文件内容，请使用 "**multipart/form-data**"。
+>
+>**<input>** 标签的 **type="file"** 属性规定了应该把输入作为文件来处理。举例来说，当在浏览器中预览时，会看到输入框旁边有一个浏览按钮。
+
+
+
+### 创建上传的脚本
+
+upload_file.php：
+
+```php
+<?php
+if ($_FILES["file"]["error"] > 0) {
+    echo "错误：" . $_FILES["file"]["error"] . "<br>";
+} else {
+    echo "上传文件名: " . $_FILES["file"]["name"] . "<br>";
+    echo "文件类型: " . $_FILES["file"]["type"] . "<br>";
+    echo "文件大小: " . ($_FILES["file"]["size"] / 1024) . " kB<br>";
+    echo "文件临时存储的位置: " . $_FILES["file"]["tmp_name"];
+}
+```
+
+通过使用 PHP 的全局数组 $_FILES，你可以从客户计算机向远程服务器上传文件。第一个参数是表单的 input name，第二个下标可以是 "name"、"type"、"size"、"tmp_name" 或 "error"。
+
+- $_FILES["file"]["name"] - 上传文件的名称
+- $_FILES["file"]["type"] - 上传文件的类型
+- $_FILES["file"]["size"] - 上传文件的大小，以字节计
+- $_FILES["file"]["tmp_name"] - 存储在服务器的文件的临时副本的名称
+- $_FILES["file"]["error"] - 由文件上传导致的错误代码
+
+
+
+### 上传限制
+
+```php
+<?php
+// 允许上传的图片后缀
+$allowedExts = array("gif", "jpeg", "jpg", "png");
+$temp = explode(".", $_FILES["file"]["name"]);
+$extension = end($temp);        // 获取文件后缀名
+if ((($_FILES["file"]["type"] == "image/gif")
+        || ($_FILES["file"]["type"] == "image/jpeg")
+        || ($_FILES["file"]["type"] == "image/jpg")
+        || ($_FILES["file"]["type"] == "image/pjpeg")
+        || ($_FILES["file"]["type"] == "image/x-png")
+        || ($_FILES["file"]["type"] == "image/png"))
+    && ($_FILES["file"]["size"] < 204800)    // 小于 200 kb
+    && in_array($extension, $allowedExts)) {
+    if ($_FILES["file"]["error"] > 0) {
+        echo "错误：: " . $_FILES["file"]["error"] . "<br>";
+    } else {
+        echo "上传文件名: " . $_FILES["file"]["name"] . "<br>";
+        echo "文件类型: " . $_FILES["file"]["type"] . "<br>";
+        echo "文件大小: " . ($_FILES["file"]["size"] / 1024) . " kB<br>";
+        echo "文件临时存储的位置: " . $_FILES["file"]["tmp_name"];
+    }
+} else {
+    echo "非法的文件格式";
+}
+?>
+```
+
+代码规定用户只能上传 .gif、.jpeg、.jpg、.png 文件，文件大小必须小于 200 kB。
+
+-   `explode` ： 使用一个字符串分割另一个字符串
+
+
+
+### 保存被上传的文件
+
+上面的实例在服务器的 PHP 临时文件夹中创建了一个被上传文件的临时副本。这个临时的副本文件会在脚本结束时消失。要保存被上传的文件，我们需要把它拷贝到另外的位置：
+
+```php
+<?php
+// 允许上传的图片后缀
+$allowedExts = array("gif", "jpeg", "jpg", "png");
+$temp = explode(".", $_FILES["file"]["name"]);
+echo $_FILES["file"]["size"];
+$extension = end($temp);     // 获取文件后缀名
+if ((($_FILES["file"]["type"] == "image/gif")
+        || ($_FILES["file"]["type"] == "image/jpeg")
+        || ($_FILES["file"]["type"] == "image/jpg")
+        || ($_FILES["file"]["type"] == "image/pjpeg")
+        || ($_FILES["file"]["type"] == "image/x-png")
+        || ($_FILES["file"]["type"] == "image/png"))
+    && ($_FILES["file"]["size"] < 204800)   // 小于 200 kb
+    && in_array($extension, $allowedExts)) {
+    if ($_FILES["file"]["error"] > 0) {
+        echo "错误：: " . $_FILES["file"]["error"] . "<br>";
+    } else {
+        echo "上传文件名: " . $_FILES["file"]["name"] . "<br>";
+        echo "文件类型: " . $_FILES["file"]["type"] . "<br>";
+        echo "文件大小: " . ($_FILES["file"]["size"] / 1024) . " kB<br>";
+        echo "文件临时存储的位置: " . $_FILES["file"]["tmp_name"] . "<br>";
+
+        // 判断当前目录下的 upload 目录是否存在该文件
+        // 如果没有 upload 目录，你需要创建它，upload 目录权限为 777
+        if (file_exists("upload/" . $_FILES["file"]["name"])) {
+            echo $_FILES["file"]["name"] . " 文件已经存在。 ";
+        } else {
+            // 如果 upload 目录不存在该文件则将文件上传到 upload 目录下
+            move_uploaded_file($_FILES["file"]["tmp_name"], "upload/" . $_FILES["file"]["name"]);
+            echo "文件存储在: " . "upload/" . $_FILES["file"]["name"];
+        }
+    }
+} else {
+    echo "非法的文件格式";
+}
+?>
+```
+
+
+
+---
+
+## Cookie
+
+cookie 常用于识别用户。cookie 是一种服务器留在用户计算机上的小文件。每当同一台计算机通过浏览器请求页面时，这台计算机将会发送 cookie。通过 PHP，您能够创建并取回 cookie 的值。
+
+
+
+### 创建Cookie
+
+setcookie() 函数用于设置 cookie。
+
+> setcookie() 函数必须位于 <html> 标签之前。
+
+```php
+setcookie(
+    string $name,
+    string $value = "",
+    int $expires = 0,
+    string $path = "",
+    string $domain = "",
+    bool $secure = false,
+    bool $httponly = false
+): bool
+```
+
+- name：Cookie 名称。
+- value：Cookie 值。 这个值储存于用户的电脑里。
+- expires：Cookie 的过期时间，这是个 Unix 时间戳。
+- path：Cookie 有效的服务器路径。 设置成 `'/'` 时，Cookie 对整个域名 `domain` 有效。 如果设置成 `'/foo/'`， Cookie 仅仅对 `domain` 中 `/foo/` 目录及其子目录有效（比如 `/foo/bar/`）。 默认值是设置 Cookie 时的当前目录。
+- domain：Cookie 的有效域名/子域名。 设置成子域名（例如 `'www.example.com'`），会使 Cookie 对这个子域名和它的三级域名有效（例如 w2.www.example.com）。 要让 Cookie 对整个域名有效（包括它的全部子域名），只要设置成域名就可以了。
+
+
+
+### 实例1
+
+在下面的例子中，我们将创建名为 "user" 的 cookie，并为它赋值 "runoob"。我们也规定了此 cookie 在一小时后过期：
+
+```php
+<?php
+setcookie("user", "test", time() + 3600);
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试cookie</title>
+</head>
+<body>
+
+</body>
+</html>
+```
+
+
+
+![image-20220102155406940](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220102155407.png)
+
+
+
+### 实例2
+
+还可以通过另一种方式设置 cookie 的过期时间。这也许比使用秒表示的方式简单。
+
+```php
+<?php
+$expire = time() + 60 * 60 * 24 * 30;
+setcookie("user", "test", $expire);
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试cookie</title>
+</head>
+<body>
+
+</body>
+</html>
+```
+
+- 过期时间被设置为一个月（*60 秒 \* 60 分 \* 24 小时 \* 30 天*）。
+
+
+
+### 获取Cookie
+
+PHP 的 $_COOKIE 变量用于取回 cookie 的值。获取名为 "user" 的 cookie 的值，并把它显示在了页面上：
+
+```php
+<?php
+$expire = time() + 60 * 60 * 24 * 30;
+setcookie("user", "test", $expire);
+
+// 输出 cookie 值
+echo $_COOKIE["user"];
+
+// 查看所有 cookie
+print_r($_COOKIE);
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试cookie</title>
+</head>
+<body>
+
+</body>
+</html>
+```
+
+- 使用 isset() 函数来确认是否已设置了 cookie：
+
+```php+HTML
+<?php
+if (isset($_COOKIE["user"]))
+    echo "欢迎 " . $_COOKIE["user"] . "!<br>";
+else
+    echo "普通访客!<br>";
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试cookie</title>
+</head>
+<body>
+
+</body>
+</html>
+```
+
+
+
+### 删除Cookie
+
+当删除 cookie 时，应当使过期日期变更为过去的时间点。
+
+```php+HTML
+<?php
+// 设置 cookie 过期时间为过去 1 小时
+setcookie("user", "", time() - 3600);
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试cookie</title>
+</head>
+<body>
+
+</body>
+</html>
+```
+
+---
+
+
+
+## Session
+
+PHP session 变量用于存储关于用户会话（session）的信息，或者更改用户会话（session）的设置。Session 变量存储单一用户的信息，并且对于应用程序中的所有页面都是可用的。
+
+用户在计算机上操作某个应用程序时，打开它，做些更改，然后关闭它。这很像一次对话（Session）。计算机知道用户是谁。它清楚用户在何时打开和关闭应用程序。但是 HTTP 地址无法保持状态(无状态)，Web 服务器并不知道用户是谁以及用户做了什么。
+
+![image-20220104225712817](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104225713.png)
+
+PHP session 解决了这个问题，它通过在服务器上存储用户信息以便随后使用（比如用户名称、购买商品等）。然而，会话信息是临时的，在用户离开网站后将被删除。如果您需要永久存储信息，可以把数据存储在数据库中。
+
+![image-20220104230047079](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104230047.png)Session 的工作机制是：为每个访客创建一个唯一的 id (UID)，并基于这个 UID 来存储变量。**UID 存储在 cookie 中，或者通过 URL 进行传导。**
+
+
+
+### 开始session
+
+- `session_start()` 会向服务器注册用户的会话，以便后面开始保存用户信息，同时会为用户会话分配一个 UID。
+
+```php+HTML
+<?php
+session_start();
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>session测试</title>
+</head>
+<body>
+
+</body>
+</html>
+```
+
+![image-20220102163106215](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220102163106.png)
+
+通过cookie传递数据。
+
+![image-20220102163227458](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220102163227.png)
+
+存储在服务端文件。
+
+
+
+### 存储session
+
+存储和取回 session 变量的正确方法是使用 PHP $_SESSION 变量：
+
+```php
+<?php
+session_start();
+
+// 存储 session 数据
+$_SESSION['views'] = 1;
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>session测试</title>
+</head>
+<body>
+
+
+<?php
+// 检索 session 数据
+echo "浏览量：" . $_SESSION['views'];
+?>
+</body>
+</html>
+```
+
+
+
+### 销毁 Session
+
+删除某些 session 数据，可以使用 unset() 或 session_destroy() 函数。nset() 函数用于释放指定的 session 变量：
+
+```php
+session_start();
+if(isset($_SESSION['views'])) {
+    unset($_SESSION['views']);
+}
+```
+
+> session_destroy() 将重置 session，将失去所有已存储的 session 数据。
+
+存储位置：
+
+![image-20220104230729128](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104230730.png)
+
+
+
+---
+
+## Filter 函数
+
+PHP 过滤器用于对来自非安全来源的数据（比如用户输入）进行验证和过滤。PHP 过滤器用于验证和过滤来自非安全来源的数据。测试、验证和过滤用户输入或自定义数据是任何 Web 应用程序的重要组成部分。PHP 的过滤器扩展的设计目的是使数据过滤更轻松快捷。
+
+几乎所有的 Web 应用程序都依赖外部的输入。这些数据通常来自用户或其他应用程序（比如 web 服务）。通过使用过滤器，您能够确保应用程序获得正确的输入类型。应该始终对外部数据进行过滤。输入过滤是最重要的应用程序安全课题之一。
+
+什么是外部数据？
+
+- 来自表单的输入数据
+- Cookies
+- 服务器变量
+- 数据库查询结果
+
+| 函数                 | 描述                                     | PHP  |
+| :------------------- | :--------------------------------------- | :--- |
+| filter_has_var()     | 检查是否存在指定输入类型的变量。         | 5    |
+| filter_id()          | 返回指定过滤器的 ID 号。                 | 5    |
+| filter_input()       | 从脚本外部获取输入，并进行过滤。         | 5    |
+| filter_input_array() | 从脚本外部获取多项输入，并进行过滤。     | 5    |
+| filter_list()        | 返回包含所有得到支持的过滤器的一个数组。 | 5    |
+| filter_var_array()   | 获取多个变量，并进行过滤。               | 5    |
+| filter_var()         | 获取一个变量，并进行过滤。               | 5    |
+
+```php
+// 过滤变量
+$int = 123;
+
+if (!filter_var($int, FILTER_VALIDATE_INT)) {
+    echo("不是一个合法的整数");
+} else {
+    echo("是个合法的整数");
+}
+```
+
+### Validating 和 Sanitizing
+
+有两种过滤器：
+
+Validating 过滤器：
+
+- 用于验证用户输入
+- 严格的格式规则（比如 URL 或 E-Mail 验证）
+- 如果成功则返回预期的类型，如果失败则返回 FALSE
+
+Sanitizing 过滤器：
+
+- 用于允许或禁止字符串中指定的字符
+- 无数据格式规则
+- 始终返回字符串
+
+比如使用下面的函数 FILTER_SANITIZE_ENCODED 过滤器去除或 URL 编码不需要的字符。
+
+```php
+$url = "http://www.google.com";
+$filter_var = filter_var($url, FILTER_SANITIZE_ENCODED);
+echo $filter_var;
+```
+
+
+
+### 选项和标志
+
+选项和标志用于向指定的过滤器添加额外的过滤选项。不同的过滤器有不同的选项和标志。
+
+```php
+// 选项和标志位
+$var = 300;
+
+$int_options = array(
+    "options" => array
+    (
+        "min_range" => 0,
+        "max_range" => 256
+    )
+);
+
+if (!filter_var($var, FILTER_VALIDATE_INT, $int_options)) {
+    echo("不是一个合法的整数");
+} else {
+    echo("是个合法的整数");
+}
+```
+
+就像上面的代码一样，选项必须放入一个名为 "options" 的相关数组中。如果使用标志，则不需在数组内。
+
+由于整数是 "300"，它不在指定的范围内，以上代码的输出将是 `不是一个合法的整数`。
+
+
+
+### 验证输入
+
+让我们试着验证来自表单的输入。我们需要做的第一件事情是确认是否存在我们正在查找的输入数据。
+
+然后我们用 filter_input() 函数过滤输入的数据。
+
+在下面的实例中，输入变量 "email" 被传到 PHP 页面：
+
+```php
+<?php
+
+// 验证输入
+if (!filter_has_var(INPUT_GET, "email")) {
+    echo("没有 email 参数");
+} else {
+    if (!filter_input(INPUT_GET, "email", FILTER_VALIDATE_EMAIL)) {
+        echo "不是一个合法的 E-Mail";
+    } else {
+        echo "是一个合法的 E-Mail";
+    }
+}
+```
+
+上面的实例有一个通过 "GET" 方法传送的输入变量 (email)：
+
+1. 检测是否存在 "GET" 类型的 "email" 输入变量
+2. 如果存在输入变量，检测它是否是有效的 e-mail 地址。
+
+
+
+### 净化输入
+
+```php
+<?php
+
+if (!filter_has_var(INPUT_GET, "url")) {
+    echo("没有 url 参数");
+} else {
+    $url = filter_input(INPUT_GET,
+        "url", FILTER_SANITIZE_URL);
+    echo $url;
+}
+```
+
+上面的实例有一个通过 "GET" 方法传送的输入变量 (url)：
+
+1. 检测是否存在 "GET" 类型的 "url" 输入变量
+2. 如果存在此输入变量，对其进行净化（删除非法字符），并将其存储在 $url 变量中
+
+假如输入变量是一个类似这样的字符串："http://gooåågøøle.com/"，则净化后的 $url 变量如下所示：
+
+```sql
+http://google.com/
+```
+
+
+
+### 过滤多个输入
+
+表单通常由多个输入字段组成。为了避免对 filter_var 或 filter_input 函数重复调用，我们可以使用 filter_var_array 或 the filter_input_array 函数。我们使用 filter_input_array() 函数来过滤三个 GET 变量。接收到的 GET 变量是一个名字、一个年龄以及一个 e-mail 地址：
+
+```php
+<?php
+
+$filters = array
+(
+    "name" => array
+    (
+        "filter" => FILTER_SANITIZE_STRING
+    ),
+    "age" => array
+    (
+        "filter" => FILTER_VALIDATE_INT,
+        "options" => array
+        (
+            "min_range" => 1,
+            "max_range" => 120
+        )
+    ),
+    "email" => FILTER_VALIDATE_EMAIL
+);
+
+$result = filter_input_array(INPUT_GET, $filters);
+
+if (!$result["age"]) {
+    echo("年龄必须在 1 到 120 之间。<br>");
+} elseif (!$result["email"]) {
+    echo("E-Mail 不合法<br>");
+} elseif (!$result["name"]) {
+    echo("姓名不合法<br>");
+} else {
+    echo("输入正确");
+}
+```
+
+上面的实例有三个通过 "GET" 方法传送的输入变量 (name、age 和 email)：
+
+1. 设置一个数组，其中包含了输入变量的名称和用于指定的输入变量的过滤器
+2. 调用 filter_input_array() 函数，参数包括 GET 输入变量及刚才设置的数组
+3. 检测 $result 变量中的 "age" 和 "email" 变量是否有非法的输入。（如果存在非法输入，在使用 filter_input_array() 函数之后，输入变量为 FALSE。）
+
+filter_input_array() 函数的第二个参数可以是数组或单一过滤器的 ID。
+
+如果该参数是单一过滤器的 ID，那么这个指定的过滤器会过滤输入数组中所有的值。
+
+如果该参数是一个数组，那么此数组必须遵循下面的规则：
+
+- 必须是一个关联数组，其中包含的输入变量是数组的键（比如 "age" 输入变量）
+- 此数组的值必须是过滤器的 ID ，或者是规定了过滤器、标志和选项的数组。
+
+
+
+### 使用 Filter Callback
+
+通过使用 FILTER_CALLBACK 过滤器，可以调用自定义的函数，把它作为一个过滤器来使用。这样，我们就拥有了数据过滤的完全控制权。
+
+您可以创建自己的自定义函数，也可以使用已存在的 PHP 函数。
+
+将您准备用到的过滤器的函数，按指定选项的规定方法进行规定。在关联数组中，带有名称 "options"。
+
+在下面的实例中，我们使用了一个自定义的函数把所有 "_" 转换为 "."：
+
+```php
+<?php
+
+function convertSpace($string) {
+    return str_replace("_", ".", $string);
+}
+
+$string = "www_google_com!";
+
+echo filter_var($string, FILTER_CALLBACK, array("options" => "convertSpace"));
+```
+
+上面的实例把所有 "_" 转换成 "." ：
+
+1. 创建一个把 "_" 替换为 "." 的函数
+2. 调用 filter_var() 函数，它的参数是 FILTER_CALLBACK 过滤器以及包含我们的函数的数组
+
+
+
+### 检测一个数字是否在一个范围内
+
+以下实例使用了 filter_var() 函数来检测一个 INT 型的变量是否在 1 到 200 内:
+
+```php
+$int = 122;
+$min = 1;
+$max = 200;
+
+if (filter_var($int, FILTER_VALIDATE_INT, array("options" => array("min_range" => $min, "max_range" => $max))) === false) {
+    echo("变量值不在合法范围内");
+} else {
+    echo("变量值在合法范围内");
+}
+```
+
+
+
+### 检测 IPv6 地址
+
+以下实例使用了 filter_var() 函数来检测一个 $ip 变量是否是 IPv6 地址:
+
+```php
+$ip = "2001:0db8:85a3:08d3:1319:8a2e:0370:7334";
+
+if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === false) {
+    echo("$ip 是一个 IPv6 地址");
+} else {
+    echo("$ip 不是一个 IPv6 地址");
+}
+```
+
+
+
+### 检测 URL - 必须包含QUERY_STRING（查询字符串）
+
+以下实例使用了 filter_var() 函数来检测 $url 是否包含查询字符串：
+
+```php
+$url = "http://www.google.com";
+
+if (!filter_var($url, FILTER_VALIDATE_URL, FILTER_FLAG_QUERY_REQUIRED) === false) {
+    echo("$url 是一个合法的 URL");
+} else {
+    echo("$url 不是一个合法的 URL");
+}
+```
 
 
