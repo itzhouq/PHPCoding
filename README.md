@@ -1526,7 +1526,7 @@ $car='BMW';
 
 这些变量可用在调用文件中：
 
-```php
+```php+HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3180,5 +3180,1466 @@ if (!filter_var($url, FILTER_VALIDATE_URL, FILTER_FLAG_QUERY_REQUIRED) === false
     echo("$url 不是一个合法的 URL");
 }
 ```
+
+
+
+## JSON
+
+JSON 是一种轻量级[资料交换格式](https://zh.wikipedia.org/wiki/数据交换)。其内容由属性和值所组成，因此也有易于阅读和处理的优势。
+
+下面介绍如何使用 PHP 语言来编码和解码 JSON 对象。
+
+| 函数            | 描述                                          |
+| :-------------- | :-------------------------------------------- |
+| json_encode     | 对变量进行 JSON 编码                          |
+| json_decode     | 对 JSON 格式的字符串进行解码，转换为 PHP 变量 |
+| json_last_error | 返回最后发生的错误                            |
+
+### json_encode
+
+PHP json_encode() 用于对变量进行 JSON 编码，该函数如果执行成功返回 JSON 数据，否则返回 FALSE 。
+
+语法：
+
+```php
+string json_encode ( $value [, $options = 0 ] )
+```
+
+- **value**: 要编码的值。该函数只对 UTF-8 编码的数据有效。
+
+- **options**:由以下常量组成的二进制掩码 JSON_HEX_QUOT, JSON_HEX_TAG, JSON_HEX_AMP, JSON_HEX_APOS, JSON_NUMERIC_CHECK, JSON_PRETTY_PRINT, JSON_UNESCAPED_SLASHES, JSON_FORCE_OBJECT, JSON_PRESERVE_ZERO_FRACTION, JSON_UNESCAPED_UNICODE, JSON_PARTIAL_OUTPUT_ON_ERROR。
+
+  要注意的是 JSON_UNESCAPED_UNICODE 选项，如果我们不希望中文被编码，可以添加该选项。
+
+```php
+$arr = array('a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5);
+echo json_encode($arr);
+```
+
+返回：
+
+```json
+{"a":1,"b":2,"c":3,"d":4,"e":5}
+```
+
+对象转 JSON：
+
+```php
+class Emp {
+    public $name = "";
+    public $hobbies = "";
+    public $birthdate = "";
+}
+
+$e = new Emp();
+$e -> name = "sachin";
+$e -> hobbies = "sports";
+$e -> birthdate = date('Y-m-d H:i:s');
+
+echo json_encode($e);
+```
+
+结果：
+
+```php
+{"name":"sachin","hobbies":"sports","birthdate":"2022-01-04 08:27:48"}
+```
+
+### 使用 JSON_UNESCAPED_UNICODE 选项
+
+```php
+$arr = array('google' => '谷歌', 'taobao' => '淘宝网');
+echo json_encode($arr); // 编码中文
+echo PHP_EOL;
+echo json_encode($arr, JSON_UNESCAPED_UNICODE);  // 不编码中文
+```
+
+结果：
+
+```json
+{"google":"\u8c37\u6b4c","taobao":"\u6dd8\u5b9d\u7f51"}
+{"google":"谷歌","taobao":"淘宝网"}
+```
+
+### json_decode
+
+PHP json_decode() 函数用于对 JSON 格式的字符串进行解码，并转换为 PHP 变量。
+
+语法：
+
+```php
+mixed json_decode ($json_string [,$assoc = false [, $depth = 512 [, $options = 0 ]]])
+```
+
+- **json_string**: 待解码的 JSON 字符串，必须是 UTF-8 编码数据
+- **assoc**: 当该参数为 TRUE 时，将返回数组，FALSE 时返回对象。
+
+```php
+$json = '{"a":1,"b":2,"c":3,"d":4,"e":5}';
+
+var_dump(json_decode($json));
+var_dump(json_decode($json, true));
+```
+
+结果：
+
+```php
+object(stdClass)#1 (5) {
+  ["a"]=>
+  int(1)
+  ["b"]=>
+  int(2)
+  ["c"]=>
+  int(3)
+  ["d"]=>
+  int(4)
+  ["e"]=>
+  int(5)
+}
+array(5) {
+  ["a"]=>
+  int(1)
+  ["b"]=>
+  int(2)
+  ["c"]=>
+  int(3)
+  ["d"]=>
+  int(4)
+  ["e"]=>
+  int(5)
+}
+```
+
+
+
+
+
+## PHP XML
+
+### XML Expat Parser
+
+XML 是一种可扩展标记语言。被设计用来传输和存储数据。类似 HTML 语言，但是其设计宗旨是传输数据，而不是显示数据。内建的 Expat 解析器使在 PHP 中处理 XML 文档成为可能。
+
+如果需要读取和更新以及创建和处理一个 XML 文档，您需要 XML 解析器。有两种基本的 XML 解析器类型：
+
+- 基于树的解析器：这种解析器把 XML 文档转换为树型结构。它分析整篇文档，并提供了对树中元素的访问，例如文档对象模型 (DOM)。
+- 基于事件的解析器：将 XML 文档视为一系列的事件。当某个具体的事件发生时，解析器会调用函数来处理。
+
+Expat 解析器是基于事件的解析器。基于事件的解析器集中在 XML 文档的内容，而不是它们的结构。正因为如此，基于事件的解析器能够比基于树的解析器更快地访问数据。比如：
+
+```xml
+<from>Jani</from>
+```
+
+基于事件的解析器把上面的 XML 报告为一连串的三个事件：
+
+- 开始元素：from
+- 开始 CDATA 部分，值：Jani
+- 关闭元素：from
+
+上面的 XML 实例包含了形式良好的 XML。不过这个实例是无效的 XML，因为没有与它关联的文档类型声明 (DTD)。
+
+然而，在使用 Expat 解析器时，这没有区别。Expat 是不检查有效性的解析器，忽略任何 DTD。作为一款基于事件、非验证的 XML 解析器，Expat 快速且轻巧，十分适合 PHP 的 Web 应用程序。
+
+我们要在 PHP 中初始化 XML 解析器，为不同的 XML 事件定义处理器，然后解析这个 XML 文件。
+
+```php
+<?php
+
+//Initialize the XML parser
+$parser = xml_parser_create();
+
+//Function to use at the start of an element
+function start($parser, $element_name, $element_attrs) {
+    switch ($element_name) {
+        case "NOTE":
+            echo "-- Note --<br>";
+            break;
+        case "TO":
+            echo "To: ";
+            break;
+        case "FROM":
+            echo "From: ";
+            break;
+        case "HEADING":
+            echo "Heading: ";
+            break;
+        case "BODY":
+            echo "Message: ";
+    }
+}
+
+//Function to use at the end of an element
+function stop($parser, $element_name) {
+    echo "<br>";
+}
+
+//Function to use when finding character data
+function char($parser, $data) {
+    echo $data;
+}
+
+//Specify element handler
+xml_set_element_handler($parser, "start", "stop");
+
+//Specify data handler
+xml_set_character_data_handler($parser, "char");
+
+//Open XML file
+$fp = fopen("test.xml", "r");
+
+//Read data
+while ($data = fread($fp, 4096)) {
+    xml_parse($parser, $data, feof($fp)) or
+    die (sprintf("XML Error: %s at line %d",
+        xml_error_string(xml_get_error_code($parser)),
+        xml_get_current_line_number($parser)));
+}
+
+//Free the XML parser
+xml_parser_free($parser);
+```
+
+test.xml
+
+```xml
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<note>
+    <to>Tove</to>
+    <from>Jani</from>
+    <heading>Reminder</heading>
+    <body>Don't forget me this weekend!</body>
+</note>
+```
+
+结果：
+
+```
+-- Note --
+To: Tove
+From: Jani
+Heading: Reminder
+Message: Don't forget me this weekend!
+```
+
+工作原理：
+
+1. 通过 xml_parser_create() 函数初始化 XML 解析器
+2. 创建配合不同事件处理程序的的函数
+3. 添加 xml_set_element_handler() 函数来定义，当解析器遇到开始和结束标签时执行哪个函数
+4. 添加 xml_set_character_data_handler() 函数来定义，当解析器遇到字符数据时执行哪个函数
+5. 通过 xml_parse() 函数来解析文件 "test.xml"
+6. 万一有错误的话，添加 xml_error_string() 函数把 XML 错误转换为文本说明
+7. 调用 xml_parser_free() 函数来释放分配给 xml_parser_create() 函数的内存
+
+
+
+### 加载和输出 XML
+
+- DOM（Document Object Model 文档对象模型）定义了访问和操作文档的标准方法。
+- XML DOM（XML Document Object Model）定义了访问和操作 XML 文档的标准方法。XML DOM 把 XML 文档作为树结构来查看。所有元素可以通过 DOM 树来访问。可以修改或删除它们的内容，并创建新的元素。元素，它们的文本，以及它们的属性，都被认为是节点。
+
+我们需要初始化 XML 解析器，加载 XML，并把它输出：
+
+```php
+$xmlDoc = new DOMDocument();
+$xmlDoc -> load("test.xml");
+
+print $xmlDoc -> saveXML();
+```
+
+结果：
+
+```
+ToveJaniReminder Don't forget me this weekend!
+```
+
+查询源代码：
+
+```xml
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<note>
+    <to>Tove</to>
+    <from>Jani</from>
+    <heading>Reminder</heading>
+    <body>Don't forget me this weekend!</body>
+</note>
+```
+
+> 上面的操作简单说就是使用 PHP 代码将 XML 解析为对象然后显示。
+
+
+
+### 遍历 XML
+
+我们要初始化 XML 解析器，加载 XML，并遍历 <note> 元素的所有元素：
+
+```php
+$xmlDoc = new DOMDocument();
+$xmlDoc -> load("test.xml");
+
+$x = $xmlDoc -> documentElement;
+foreach ($x -> childNodes as $item) {
+    print $item -> nodeName . " = " . $item -> nodeValue . "<br>";
+}
+```
+
+
+
+```
+#text =
+to = Tove
+#text =
+from = Jani
+#text =
+heading = Reminder
+#text =
+body = Don't forget me this weekend!
+#text =
+```
+
+> 在上面的实例中，您看到了每个元素之间存在空的文本节点。当 XML 生成时，它通常会在节点之间包含空白。XML DOM 解析器把它们当作普通的元素，如果您不注意它们，有时会产生问题。
+
+
+
+### PHP SimpleXML
+
+PHP SimpleXML 处理最普通的 XML 任务，其余的任务则交由其它扩展处理。SimpleXML 扩展提供了一种获取 XML 元素的名称和文本的简单方式。与 DOM 或 Expat 解析器相比，SimpleXML 仅仅用几行代码就可以从 XML 元素中读取文本数据。
+
+SimpleXML 可把 XML 文档（或 XML 字符串）转换为对象，比如：
+
+- 元素被转换为 SimpleXMLElement 对象的单一属性。当同一级别上存在多个元素时，它们会被置于数组中。
+- 属性通过使用关联数组进行访问，其中的索引对应属性名称。
+- 元素内部的文本被转换为字符串。如果一个元素拥有多个文本节点，则按照它们被找到的顺序进行排列。
+
+当执行类似下列的基础任务时，SimpleXML 使用起来非常快捷：
+
+- 读取/提取 XML 文件/字符串的数据
+- 编辑文本节点或属性
+
+然而，在处理高级 XML 时，比如命名空间，最好使用 Expat 解析器或 XML DOM。
+
+```php
+$xml = simplexml_load_file("test.xml");
+print_r($xml);
+```
+
+结果：
+
+```php
+SimpleXMLElement Object
+(
+    [to] => Tove
+    [from] => Jani
+    [heading] => Reminder
+    [body] => Don't forget me this weekend!
+)
+```
+
+- 输出 XML 文件中每个元素的数据：
+
+```php
+$xml = simplexml_load_file("test.xml");
+print_r($xml);
+
+echo PHP_EOL;
+
+$xml = simplexml_load_file("test.xml");
+echo $xml -> to . "<br>";
+echo $xml -> from . "<br>";
+echo $xml -> heading . "<br>";
+echo $xml -> body;
+```
+
+结果：
+
+```xml
+Tove
+Jani
+Reminder
+Don't forget me this weekend!
+```
+
+- 输出每个子节点的元素名称和数据：
+
+```php
+$xml = simplexml_load_file("test.xml");
+echo $xml -> getName() . "<br>";
+
+foreach ($xml -> children() as $child) {
+    echo $child -> getName() . ": " . $child . "<br>";
+}
+```
+
+结果：
+
+```
+note
+to: Tove
+from: Jani
+heading: Reminder
+body: Don't forget me this weekend!
+```
+
+---
+
+## Ajax
+
+AJAX 是一种在无需重新加载整个网页的情况下，能够更新部分网页的技术。是一种用于创建快速动态网页的技术。AJAX 通过在后台与服务器进行少量数据交换，使网页实现异步更新。这意味着可以在不重载整个页面的情况下，对网页的某些部分进行更新。传统的网页（不使用 AJAX）如果需要更新内容，必须重载整个页面。
+
+![image-20220104161250927](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104161251.png)
+
+https://www.processon.com/view/link/61d4018d0e3e744157651a70
+
+
+
+下面的实例将演示当用户在输入框中键入字符时，网页如何与 Web 服务器进行通信：
+
+![image-20220104161731428](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104161731.png)
+
+当用户在上面的输入框中键入字符时，会执行 "showHint()" 函数。该函数由 "onkeyup" 事件触发：
+
+ajax.php
+
+```php+HTML
+<html lang="en">
+<head>
+    <script>
+        function showHint(str) {
+            if (str.length === 0) {
+                document.getElementById("txtHint").innerHTML = "";
+                return;
+            }
+            if (window.XMLHttpRequest) {
+                // IE7+, Firefox, Chrome, Opera, Safari 浏览器执行的代码
+                xmlhttp = new XMLHttpRequest();
+            } else {
+                //IE6, IE5 浏览器执行的代码
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+                    document.getElementById("txtHint").innerHTML = xmlhttp.responseText;
+                }
+            }
+            xmlhttp.open("GET", "gethint.php?q=" + str, true);
+            xmlhttp.send();
+        }
+    </script>
+    <title></title>
+</head>
+<body>
+
+<p><b> 在输入框中输入一个姓名:</b></p>
+<form>
+    姓名: <label>
+        <input type="text" onkeyup="showHint(this.value)">
+    </label>
+</form>
+<p> 返回值: <span id="txtHint"></span></p>
+
+</body>
+</html>
+```
+
+如果输入框是空的（str.length === 0），该函数会清空 txtHint 占位符的内容，并退出该函数。如果输入框不是空的，那么 showHint() 会执行以下步骤：
+
+- 创建 XMLHttpRequest 对象
+- 创建在服务器响应就绪时执行的函数
+- 向服务器上的文件发送请求
+- 请注意添加到 URL 末端的参数（q）（包含输入框的内容）
+
+上面这段通过 JavaScript 调用的服务器页面是名为 "gethint.php" 的 PHP 文件。"gethint.php" 中的源代码会检查姓名数组，然后向浏览器返回对应的姓名：
+
+```php
+// 将姓名填充到数组中
+$a[] = "Anna";
+$a[] = "Brittany";
+$a[] = "Cinderella";
+$a[] = "Diana";
+$a[] = "Eva";
+$a[] = "Fiona";
+$a[] = "Gunda";
+$a[] = "Hege";
+$a[] = "Inga";
+$a[] = "Johanna";
+$a[] = "Kitty";
+$a[] = "Linda";
+$a[] = "Nina";
+$a[] = "Ophelia";
+$a[] = "Petunia";
+$a[] = "Amanda";
+$a[] = "Raquel";
+$a[] = "Cindy";
+$a[] = "Doris";
+$a[] = "Eve";
+$a[] = "Evita";
+$a[] = "Sunniva";
+$a[] = "Tove";
+$a[] = "Unni";
+$a[] = "Violet";
+$a[] = "Liza";
+$a[] = "Elizabeth";
+$a[] = "Ellen";
+$a[] = "Wenche";
+$a[] = "Vicky";
+
+//从请求URL地址中获取 q 参数
+$q = $_GET["q"];
+
+//查找是否由匹配值， 如果 q>0
+if (strlen($q) > 0) {
+    $hint = "";
+    for ($i = 0; $i < count($a); $i++) {
+        if (strtolower($q) == strtolower(substr($a[$i], 0, strlen($q)))) {
+            if ($hint == "") {
+                $hint = $a[$i];
+            } else {
+                $hint = $hint . " , " . $a[$i];
+            }
+        }
+    }
+}
+
+// 如果没有匹配值设置输出为 "no suggestion"
+if ($hint == "") {
+    $response = "no suggestion";
+} else {
+    $response = $hint;
+}
+
+//输出返回值
+echo $response;
+```
+
+如果 JavaScript 发送了任何文本（即 strlen($q) > 0），则会发生：
+
+1. 查找匹配 JavaScript 发送的字符的姓名
+2. 如果未找到匹配，则将响应字符串设置为 "no suggestion"
+3. 如果找到一个或多个匹配姓名，则用所有姓名设置响应字符串
+4. 把响应发送到 "txtHint" 占位符
+
+
+
+### Ajax数据库
+
+AJAX 可用来与数据库进行交互式通信。下面的实例将演示网页如何通过 AJAX 从数据库读取信息：
+
+- 创建测试数据：
+
+```sql
+DROP TABLE IF EXISTS `websites`;
+CREATE TABLE `websites` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` char(20) NOT NULL DEFAULT '' COMMENT '站点名称',
+  `url` varchar(255) NOT NULL DEFAULT '',
+  `alexa` int(11) NOT NULL DEFAULT '0' COMMENT 'Alexa 排名',
+  `country` char(10) NOT NULL DEFAULT '' COMMENT '国家',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+
+BEGIN;
+INSERT INTO `websites` 
+VALUES ('1', 'Google', 'https://www.google.cm/', '1', 'USA'), 
+       ('2', '淘宝', 'https://www.taobao.com/', '13', 'CN'), 
+       ('3', '百度', 'http://www.baidu.com/', '4689', 'CN'), 
+       ('4', '微博', 'http://weibo.com/', '20', 'CN'), 
+       ('5', 'Facebook', 'https://www.facebook.com/', '3', 'USA');
+COMMIT;
+```
+
+
+
+- test.html 代码：当用户在上面的下拉列表中选择某位用户时，会执行名为 "showSite()" 的函数。该函数由 "onchange" 事件触发：
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试网页</title>
+</head>
+<body>
+<script>
+    function showSite(str) {
+        if (str === "") {
+            document.getElementById("txtHint").innerHTML = "";
+            return;
+        }
+        if (window.XMLHttpRequest) {
+            // IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+            xmlhttp = new XMLHttpRequest();
+        } else {
+            // IE6, IE5 浏览器执行代码
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+                document.getElementById("txtHint").innerHTML = xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", "getsite_mysql.php?q=" + str, true);
+        xmlhttp.send();
+    }
+</script>
+<form>
+    <label>
+        <select name="users" onchange="showSite(this.value)">
+            <option value="">选择一个网站:</option>
+            <option value="1">Google</option>
+            <option value="2">淘宝</option>
+            <option value="3">百度</option>
+            <option value="4">微博</option>
+            <option value="5">Facebook</option>
+        </select>
+    </label>
+</form>
+<br>
+<div id="txtHint"><b>网站信息显示在这里……</b></div>
+
+</body>
+</html>
+```
+
+showSite() 函数会执行以下步骤：
+
+- 检查是否有网站被选择
+- 创建 XMLHttpRequest 对象
+- 创建在服务器响应就绪时执行的函数
+- 向服务器上的文件发送请求
+- 请注意添加到 URL 末端的参数（q）（包含下拉列表的内容）
+
+
+
+- 上面这段通过 JavaScript 调用的服务器页面是名为 "getsite_mysql.php" 的 PHP 文件。"getsite_mysql.php" 中的源代码会运行一次针对 MySQL 数据库的查询，然后在 HTML 表格中返回结果：
+
+```php
+<?php
+
+$q = isset($_GET["q"]) ? intval($_GET["q"]) : '';
+
+if (empty($q)) {
+    echo '请选择一个网站';
+    exit;
+}
+
+$con = mysqli_connect('localhost', 'root', '123456');
+if (!$con) {
+    die('Could not connect: ' . mysqli_error($con));
+}
+// 选择数据库
+mysqli_select_db($con, "test");
+// 设置编码，防止中文乱码
+mysqli_set_charset($con, "utf8");
+
+$sql = "SELECT * FROM Websites WHERE id = '" . $q . "'";
+
+$result = mysqli_query($con, $sql);
+
+echo "<table border='1'>
+<tr>
+<th>ID</th>
+<th>网站名</th>
+<th>网站 URL</th>
+<th>Alexa 排名</th>
+<th>国家</th>
+</tr>";
+
+while ($row = mysqli_fetch_array($result)) {
+    echo "<tr>";
+    echo "<td>" . $row['id'] . "</td>";
+    echo "<td>" . $row['name'] . "</td>";
+    echo "<td>" . $row['url'] . "</td>";
+    echo "<td>" . $row['alexa'] . "</td>";
+    echo "<td>" . $row['country'] . "</td>";
+    echo "</tr>";
+}
+echo "</table>";
+
+mysqli_close($con);
+```
+
+当查询从 JavaScript 发送到 PHP 文件时，将发生：
+
+1. PHP 打开一个到 MySQL 数据库的连接
+2. 找到选中的用户
+3. 创建 HTML 表格，填充数据，并发送回 "txtHint" 占位符
+
+
+
+### Ajax XML
+
+AJAX 可用来与 XML 文件进行交互式通信。下面的实例将演示网页如何通过 AJAX 从 XML 文件读取信息：
+
+![image-20220104172555958](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220104172556.png)
+
+当用户在上面的下拉列表中选择某张 CD 时，会执行名为 "showCD()" 的函数。该函数由 "onchange" 事件触发：
+
+```php+HTML
+<html lang="en">
+<head>
+    <script>
+        function showCD(str) {
+            if (str === "") {
+                document.getElementById("txtHint").innerHTML = "";
+                return;
+            }
+            if (window.XMLHttpRequest) {
+                // IE7+, Firefox, Chrome, Opera, Safari 浏览器执行
+                xmlhttp = new XMLHttpRequest();
+            } else {
+                // IE6, IE5 浏览器执行
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+                    document.getElementById("txtHint").innerHTML = xmlhttp.responseText;
+                }
+            }
+            xmlhttp.open("GET", "getcd.php?q=" + str, true);
+            xmlhttp.send();
+        }
+    </script>
+    <title></title>
+</head>
+<body>
+
+<form>
+    Select a CD:
+    <label>
+        <select name="cds" onchange="showCD(this.value)">
+            <option value="">Select a CD:</option>
+            <option value="Bob Dylan">Bob Dylan</option>
+            <option value="Bonnie Tyler">Bonnie Tyler</option>
+            <option value="Dolly Parton">Dolly Parton</option>
+        </select>
+    </label>
+</form>
+<div id="txtHint"><b>CD info will be listed here...</b></div>
+
+</body>
+</html>
+```
+
+showCD() 函数会执行以下步骤：
+
+- 检查是否有 CD 被选择
+- 创建 XMLHttpRequest 对象
+- 创建在服务器响应就绪时执行的函数
+- 向服务器上的文件发送请求
+- 请注意添加到 URL 末端的参数（q）（包含下拉列表的内容）
+
+
+
+上面这段通过 JavaScript 调用的服务器页面是名为 "getcd.php" 的 PHP 文件。PHP 脚本加载 XML 文档 `cd_catalog.xml`，运行针对 XML 文件的查询，并以 HTML 返回结果：
+
+```php
+<?php
+
+$q = $_GET["q"];
+
+$xmlDoc = new DOMDocument();
+$xmlDoc -> load("cd_catalog.xml");
+
+$x = $xmlDoc -> getElementsByTagName('ARTIST');
+
+for ($i = 0; $i <= $x -> length - 1; $i++) {
+    // 处理元素节点
+    if ($x -> item($i) -> nodeType == 1) {
+        if ($x -> item($i) -> childNodes -> item(0) -> nodeValue == $q) {
+            $y = ($x -> item($i) -> parentNode);
+        }
+    }
+}
+
+$cd = ($y -> childNodes);
+
+for ($i = 0; $i < $cd -> length; $i++) {
+    // 处理元素节点
+    if ($cd -> item($i) -> nodeType == 1) {
+        echo("<b>" . $cd -> item($i) -> nodeName . ":</b> ");
+        echo($cd -> item($i) -> childNodes -> item(0) -> nodeValue);
+        echo("<br>");
+    }
+}
+```
+
+当 CD 查询从 JavaScript 发送到 PHP 页面时，将发生：
+
+1. PHP 创建 XML DOM 对象
+2. 查找所有 <artist> 元素中与 JavaScript 所传数据相匹配的名字
+3. 输出 album 的信息，并发送回 "txtHint" 占位符
+
+
+
+cd_catalog.xml：
+
+```xml
+<CATALOG>
+    <CD>
+        <TITLE>Empire Burlesque</TITLE>
+        <ARTIST>Bob Dylan</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>Columbia</COMPANY>
+        <PRICE>10.90</PRICE>
+        <YEAR>1985</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Hide your heart</TITLE>
+        <ARTIST>Bonnie Tyler</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>CBS Records</COMPANY>
+        <PRICE>9.90</PRICE>
+        <YEAR>1988</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Greatest Hits</TITLE>
+        <ARTIST>Dolly Parton</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>RCA</COMPANY>
+        <PRICE>9.90</PRICE>
+        <YEAR>1982</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Still got the blues</TITLE>
+        <ARTIST>Gary Moore</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Virgin records</COMPANY>
+        <PRICE>10.20</PRICE>
+        <YEAR>1990</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Eros</TITLE>
+        <ARTIST>Eros Ramazzotti</ARTIST>
+        <COUNTRY>EU</COUNTRY>
+        <COMPANY>BMG</COMPANY>
+        <PRICE>9.90</PRICE>
+        <YEAR>1997</YEAR>
+    </CD>
+    <CD>
+        <TITLE>One night only</TITLE>
+        <ARTIST>Bee Gees</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Polydor</COMPANY>
+        <PRICE>10.90</PRICE>
+        <YEAR>1998</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Sylvias Mother</TITLE>
+        <ARTIST>Dr.Hook</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>CBS</COMPANY>
+        <PRICE>8.10</PRICE>
+        <YEAR>1973</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Maggie May</TITLE>
+        <ARTIST>Rod Stewart</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Pickwick</COMPANY>
+        <PRICE>8.50</PRICE>
+        <YEAR>1990</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Romanza</TITLE>
+        <ARTIST>Andrea Bocelli</ARTIST>
+        <COUNTRY>EU</COUNTRY>
+        <COMPANY>Polydor</COMPANY>
+        <PRICE>10.80</PRICE>
+        <YEAR>1996</YEAR>
+    </CD>
+    <CD>
+        <TITLE>When a man loves a woman</TITLE>
+        <ARTIST>Percy Sledge</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>Atlantic</COMPANY>
+        <PRICE>8.70</PRICE>
+        <YEAR>1987</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Black angel</TITLE>
+        <ARTIST>Savage Rose</ARTIST>
+        <COUNTRY>EU</COUNTRY>
+        <COMPANY>Mega</COMPANY>
+        <PRICE>10.90</PRICE>
+        <YEAR>1995</YEAR>
+    </CD>
+    <CD>
+        <TITLE>1999 Grammy Nominees</TITLE>
+        <ARTIST>Many</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>Grammy</COMPANY>
+        <PRICE>10.20</PRICE>
+        <YEAR>1999</YEAR>
+    </CD>
+    <CD>
+        <TITLE>For the good times</TITLE>
+        <ARTIST>Kenny Rogers</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Mucik Master</COMPANY>
+        <PRICE>8.70</PRICE>
+        <YEAR>1995</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Big Willie style</TITLE>
+        <ARTIST>Will Smith</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>Columbia</COMPANY>
+        <PRICE>9.90</PRICE>
+        <YEAR>1997</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Tupelo Honey</TITLE>
+        <ARTIST>Van Morrison</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Polydor</COMPANY>
+        <PRICE>8.20</PRICE>
+        <YEAR>1971</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Soulsville</TITLE>
+        <ARTIST>Jorn Hoel</ARTIST>
+        <COUNTRY>Norway</COUNTRY>
+        <COMPANY>WEA</COMPANY>
+        <PRICE>7.90</PRICE>
+        <YEAR>1996</YEAR>
+    </CD>
+    <CD>
+        <TITLE>The very best of</TITLE>
+        <ARTIST>Cat Stevens</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Island</COMPANY>
+        <PRICE>8.90</PRICE>
+        <YEAR>1990</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Stop</TITLE>
+        <ARTIST>Sam Brown</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>A and M</COMPANY>
+        <PRICE>8.90</PRICE>
+        <YEAR>1988</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Bridge of Spies</TITLE>
+        <ARTIST>T'Pau</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Siren</COMPANY>
+        <PRICE>7.90</PRICE>
+        <YEAR>1987</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Private Dancer</TITLE>
+        <ARTIST>Tina Turner</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>Capitol</COMPANY>
+        <PRICE>8.90</PRICE>
+        <YEAR>1983</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Midt om natten</TITLE>
+        <ARTIST>Kim Larsen</ARTIST>
+        <COUNTRY>EU</COUNTRY>
+        <COMPANY>Medley</COMPANY>
+        <PRICE>7.80</PRICE>
+        <YEAR>1983</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Pavarotti Gala Concert</TITLE>
+        <ARTIST>Luciano Pavarotti</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>DECCA</COMPANY>
+        <PRICE>9.90</PRICE>
+        <YEAR>1991</YEAR>
+    </CD>
+    <CD>
+        <TITLE>The dock of the bay</TITLE>
+        <ARTIST>Otis Redding</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>Atlantic</COMPANY>
+        <PRICE>7.90</PRICE>
+        <YEAR>1987</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Picture book</TITLE>
+        <ARTIST>Simply Red</ARTIST>
+        <COUNTRY>EU</COUNTRY>
+        <COMPANY>Elektra</COMPANY>
+        <PRICE>7.20</PRICE>
+        <YEAR>1985</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Red</TITLE>
+        <ARTIST>The Communards</ARTIST>
+        <COUNTRY>UK</COUNTRY>
+        <COMPANY>London</COMPANY>
+        <PRICE>7.80</PRICE>
+        <YEAR>1987</YEAR>
+    </CD>
+    <CD>
+        <TITLE>Unchain my heart</TITLE>
+        <ARTIST>Joe Cocker</ARTIST>
+        <COUNTRY>USA</COUNTRY>
+        <COMPANY>EMI</COMPANY>
+        <PRICE>8.20</PRICE>
+        <YEAR>1987</YEAR>
+    </CD>
+</CATALOG>
+```
+
+
+
+---
+
+## 错误
+
+在 PHP 中，默认的错误处理很简单。一条错误消息会被发送到浏览器，这条消息带有文件名、行号以及描述错误的消息。在创建脚本和 Web 应用程序时，错误处理是一个重要的部分。下面介绍了 PHP 中一些最为重要的错误检测方法。错误处理方法：
+
+- 简单的 "die()" 语句
+- 自定义错误和错误触发器
+- 错误报告
+
+
+
+### 基本的错误处理：使用 die() 函数
+
+```php
+// 打开文件
+$file = fopen("welcome.txt", "r");
+```
+
+一个打开文本文件的简单脚本。如果文件不存在，您会得到类似这样的错误：
+
+```php
+PHP Warning:  fopen(welcome.txt): Failed to open stream: No such file or directory in
+```
+
+为了避免用户得到类似上面的错误消息，我们在访问文件之前检测该文件是否存在：
+
+```php
+// 打开文件之前检验
+if (!file_exists("welcome.txt")) {
+    die("文件不存在");
+} else {
+    $file = fopen("welcome.txt", "r");
+}
+```
+
+相比之前的代码，上面的代码更有效，这是由于它采用了一个简单的错误处理机制在错误之后终止了脚本。然而，简单地终止脚本并不总是恰当的方式【比如当我们加载一个文件失败时，尝试去加载另一个文件】。下面研究一下用于处理错误的备选的 PHP 函数。
+
+
+
+### 创建自定义错误处理器
+
+创建一个自定义的错误处理器非常简单。我们很简单地创建了一个专用函数，可以在 PHP 中发生错误时调用该函数。该函数必须有能力处理至少两个参数 (error level 和 error message)，但是可以接受最多五个参数（可选的：file, line-number 和 error context）。语法：
+
+```php
+error_function(error_level,error_message, error_file,error_line,error_context)
+```
+
+| 参数          | 描述                                                         |
+| :------------ | :----------------------------------------------------------- |
+| error_level   | 必需。为用户定义的错误规定错误报告级别。必须是一个数字。参见下面的表格：错误报告级别。 |
+| error_message | 必需。为用户定义的错误规定错误消息。                         |
+| error_file    | 可选。规定错误发生的文件名。                                 |
+| error_line    | 可选。规定错误发生的行号。                                   |
+| error_context | 可选。规定一个数组，包含了当错误发生时在用的每个变量以及它们的值。 |
+
+
+
+### 错误报告级别
+
+这些错误报告级别是用户自定义的错误处理程序处理的不同类型的错误：
+
+| 值   | 常量                | 描述                                                         |
+| :--- | :------------------ | :----------------------------------------------------------- |
+| 2    | E_WARNING           | 非致命的 run-time 错误。不暂停脚本执行。                     |
+| 8    | E_NOTICE            | run-time 通知。在脚本发现可能有错误时发生，但也可能在脚本正常运行时发生。 |
+| 256  | E_USER_ERROR        | 致命的用户生成的错误。这类似于程序员使用 PHP 函数 trigger_error() 设置的 E_ERROR。 |
+| 512  | E_USER_WARNING      | 非致命的用户生成的警告。这类似于程序员使用 PHP 函数 trigger_error() 设置的 E_WARNING。 |
+| 1024 | E_USER_NOTICE       | 用户生成的通知。这类似于程序员使用 PHP 函数 trigger_error() 设置的 E_NOTICE。 |
+| 4096 | E_RECOVERABLE_ERROR | 可捕获的致命错误。类似 E_ERROR，但可被用户定义的处理程序捕获。（参见 set_error_handler()） |
+| 8191 | E_ALL               | 所有错误和警告。                                             |
+
+现在，让我们创建一个处理错误的函数：
+
+```php
+// 错误处理函数
+function customError($errno, $errstr) {
+    echo "<b>Error:</b> [$errno] $errstr<br>";
+    echo "脚本结束";
+    die();
+}
+```
+
+上面的代码是一个简单的错误处理函数。当它被触发时，它会取得错误级别和错误消息。然后它会输出错误级别和消息，并终止脚本。
+
+
+
+### 设置错误处理程序
+
+PHP 的默认错误处理程序是内建的错误处理程序。我们打算把上面的函数改造为脚本运行期间的默认错误处理程序。可以修改错误处理程序，使其仅应用到某些错误，这样脚本就能以不同的方式来处理不同的错误。我们打算针对所有错误来使用我们自定义的错误处理程序：
+
+```php
+set_error_handler("customError");
+```
+
+- set_error_handler ：设置用户自定义的错误处理函数。
+
+通过尝试输出不存在的变量来测试这个错误程序；
+
+```php
+// 错误处理函数
+function customError($errno, $errstr) {
+    echo "<b>Error:</b> [$errno] $errstr<br>";
+    echo "脚本结束";
+    die();
+}
+
+// 设置错误处理函数
+set_error_handler("customError", E_USER_WARNING);
+
+// 触发错误
+$test = 2;
+if ($test > 1) {
+    trigger_error("变量值必须小于等于 1", E_USER_WARNING);
+}
+```
+
+结果：
+
+```
+Error: [512] 变量值必须小于等于 1
+脚本结束
+```
+
+
+
+### 触发错误
+
+在脚本中用户输入数据的位置，当用户的输入无效时触发错误是很有用的。在 PHP 中，这个任务由 trigger_error() 函数完成。
+
+```php
+$test = 2;
+if ($test > 1) {
+    trigger_error("变量值必须小于等于 1");
+}
+```
+
+结果：
+
+```
+PHP Notice:  变量值必须小于等于 1 in
+```
+
+改造程序，如果发生了 E_USER_WARNING，我们将使用我们自定义的错误处理程序并结束脚本：
+
+```php
+// 错误处理函数
+function customError($errno, $errstr) {
+    echo "<b>Error:</b> [$errno] $errstr<br>";
+    echo "脚本结束";
+    die();
+}
+
+// 设置错误处理函数
+set_error_handler("customError", E_USER_WARNING);
+
+// 触发错误
+$test = 2;
+if ($test > 1) {
+    trigger_error("变量值必须小于等于 1", E_USER_ERROR);
+}
+```
+
+结果：
+
+```
+PHP Fatal error:  变量值必须小于等于 1 in
+```
+
+
+
+---
+
+## 异常
+
+异常用于在指定的错误发生时改变脚本的正常流程。PHP 5 提供了一种新的面向对象的错误处理方法。异常处理用于在指定的错误（异常）情况发生时改变脚本的正常流程。这种情况称为异常。
+
+当异常被触发时，通常会发生：
+
+- 当前代码状态被保存
+- 代码执行被切换到预定义（自定义）的异常处理器函数
+- 根据情况，处理器也许会从保存的代码状态重新开始执行代码，终止脚本执行，或从代码中另外的位置继续执行脚本
+
+### 异常的基本使用
+
+当异常被抛出时，其后的代码不会继续执行，PHP 会尝试查找匹配的 "catch" 代码块。如果异常没有被捕获，而且又没用使用 set_exception_handler() 作相应的处理的话，那么将发生一个严重的错误（致命错误），并且输出 "Uncaught Exception" （未捕获异常）的错误消息。让我们尝试抛出一个异常，同时不去捕获它：
+
+```php
+// 创建一个有异常处理的函数
+function checkNum($number) {
+    if ($number > 1) {
+        throw new Exception("Value must be 1 or below");
+    }
+    return true;
+}
+
+// 触发异常
+checkNum(2);
+```
+
+上面的代码会得到类似这样的一个错误：
+
+```php
+PHP Fatal error:  Uncaught Exception: Value must be 1 or below in /Applications/XAMPP/xamppfiles/htdocs/PHPCode/exception/test.php:6
+Stack trace:
+#0 /Applications/XAMPP/xamppfiles/htdocs/PHPCode/exception/test.php(12): checkNum(2)
+#1 {main}
+  thrown in /Applications/XAMPP/xamppfiles/htdocs/PHPCode/exception/test.php on line 6
+```
+
+
+
+### Try、throw 和 catch
+
+要避免上面实例中出现的错误，我们需要创建适当的代码来处理异常。
+
+适当的处理异常代码应该包括：
+
+1. Try - 使用异常的函数应该位于 "try" 代码块内。如果没有触发异常，则代码将照常继续执行。但是如果异常被触发，会抛出一个异常。
+2. Throw - 里规定如何触发异常。每一个 "throw" 必须对应至少一个 "catch"。
+3. Catch - "catch" 代码块会捕获异常，并创建一个包含异常信息的对象。
+
+让我们触发一个异常：
+
+```php
+// 创建一个有异常处理的函数
+function checkNum($number) {
+    if ($number > 1) {
+        throw new Exception("变量值必须小于等于 1");
+    }
+    return true;
+}
+
+// 在try块触发异常
+try {
+    checkNum(2);
+    // 如果抛出异常，以下文本不会输出
+    echo '如果输出该内容，说明 $number 变量';
+} catch (Exception $e) {
+    // 捕获异常
+    echo 'Message: ' . $e -> getMessage();
+}
+```
+
+结果：
+
+```
+Message: 变量值必须小于等于 1
+```
+
+上面的代码抛出了一个异常，并捕获了它：
+
+1. 创建 checkNum() 函数。它检测数字是否大于 1。如果是，则抛出一个异常。
+2. 在 "try" 代码块中调用 checkNum() 函数。
+3. checkNum() 函数中的异常被抛出。
+4. "catch" 代码块接收到该异常，并创建一个包含异常信息的对象 ($e)。
+5. 通过从这个 exception 对象调用 $e->getMessage()，输出来自该异常的错误消息。
+
+然而，为了遵循 "每个 throw 必须对应一个 catch" 的原则，可以设置一个顶层的异常处理器来处理漏掉的错误。
+
+
+
+### 创建一个自定义的 Exception 类
+
+创建自定义的异常处理程序非常简单。我们简单地创建了一个专门的类，当 PHP 中发生异常时，可调用其函数。该类必须是 exception 类的一个扩展。这个自定义的 customException 类继承了 PHP 的 exception 类的所有属性，您可向其添加自定义的函数。我们开始创建 customException 类：
+
+```php
+class customException extends Exception {
+    public function errorMessage() {
+        // 错误信息
+        $errorMsg = '错误行号 ' . $this -> getLine() . ' in ' . $this -> getFile()
+            . ': <b>' . $this -> getMessage() . '</b> 不是一个合法的 E-Mail 地址';
+        return $errorMsg;
+    }
+}
+
+$email = "someone@example...com";
+
+try {
+    // 检测邮箱
+    if (filter_var($email, FILTER_VALIDATE_EMAIL) === FALSE) {
+        // 如果是个不合法的邮箱地址，抛出异常
+        throw new customException($email);
+    }
+} catch (customException $e) {
+//display custom message
+    echo $e -> errorMessage();
+}
+```
+
+结果：
+
+```
+错误行号 18 in /Applications/XAMPP/xamppfiles/htdocs/PHPCode/exception/customerException.php: someone@example...com 不是一个合法的 E-Mail 地址
+```
+
+这个新的类是旧的 exception 类的副本，外加 errorMessage() 函数。正因为它是旧类的副本，因此它从旧类继承了属性和方法，我们可以使用 exception 类的方法，比如 getLine()、getFile() 和 getMessage()。
+
+上面的代码抛出了一个异常，并通过一个自定义的 exception 类来捕获它：
+
+1. customException() 类是作为旧的 exception 类的一个扩展来创建的。这样它就继承了旧的 exception 类的所有属性和方法。
+2. 创建 errorMessage() 函数。如果 e-mail 地址不合法，则该函数返回一条错误消息。
+3. 把 $email 变量设置为不合法的 e-mail 地址字符串。
+4. 执行 "try" 代码块，由于 e-mail 地址不合法，因此抛出一个异常。
+5. "catch" 代码块捕获异常，并显示错误消息。
+
+
+
+### 多个异常
+
+可以为一段脚本使用多个异常，来检测多种情况。可以使用多个 if..else 代码块，或一个 switch 代码块，或者嵌套多个异常。这些异常能够使用不同的 exception 类，并返回不同的错误消息：
+
+```php
+class customException extends Exception {
+    public function errorMessage() {
+        // 错误信息
+        $errorMsg = '错误行号 ' . $this -> getLine() . ' in ' . $this -> getFile()
+            . ': <b>' . $this -> getMessage() . '</b> 不是一个合法的 E-Mail 地址';
+        return $errorMsg;
+    }
+}
+
+$email = "someone@example.com";
+
+try {
+    // 检测邮箱
+    if (filter_var($email, FILTER_VALIDATE_EMAIL) === FALSE) {
+        // 如果是个不合法的邮箱地址，抛出异常
+        throw new customException($email);
+    }
+    // 检测 "example" 是否在邮箱地址中
+    if (strpos($email, "example") !== FALSE) {
+        throw new Exception("$email 是 example 邮箱");
+    }
+} catch (customException $e) {
+    echo $e -> errorMessage();
+} catch (Exception $e) {
+    echo $e -> getMessage();
+}
+```
+
+上面的代码测试了两种条件，如果其中任何一个条件不成立，则抛出一个异常：
+
+1. customException() 类是作为旧的 exception 类的一个扩展来创建的。这样它就继承了旧的 exception 类的所有属性和方法。
+2. 创建 errorMessage() 函数。如果 e-mail 地址不合法，则该函数返回一个错误消息。
+3. 把 $email 变量设置为一个字符串，该字符串是一个有效的 e-mail 地址，但包含字符串 "example"。
+4. 执行 "try" 代码块，在第一个条件下，不会抛出异常。
+5. 由于 e-mail 含有字符串 "example"，第二个条件会触发异常。
+6. "catch" 代码块会捕获异常，并显示恰当的错误消息。
+
+如果 customException 类抛出了异常，但没有捕获 customException，仅仅捕获了 base exception，则在那里处理异常。
+
+
+
+### 重新抛出异常
+
+有时，当异常被抛出时，您也许希望以不同于标准的方式对它进行处理。可以在一个 "catch" 代码块中再次抛出异常。脚本应该对用户隐藏系统错误。对程序员来说，系统错误也许很重要，但是用户对它们并不感兴趣。为了让用户更容易使用，您可以再次抛出带有对用户比较友好的消息的异常：
+
+```php
+class customException extends Exception {
+    public function errorMessage() {
+        // 错误信息
+        $errorMsg = $this -> getMessage() . ' 不是一个合法的 E-Mail 地址。';
+        return $errorMsg;
+    }
+}
+
+$email = "someone@example.com";
+
+try {
+    try {
+        // 检测 "example" 是否在邮箱地址中
+        if (strpos($email, "example") !== FALSE) {
+            // 如果是个不合法的邮箱地址，抛出异常
+            throw new Exception($email);
+        }
+    } catch (Exception $e) {
+        // 重新抛出异常
+        throw new customException($email);
+    }
+} catch (customException $e) {
+    // 显示自定义信息
+    echo $e -> errorMessage();
+}
+```
+
+结果：
+
+```
+someone@example.com 不是一个合法的 E-Mail 地址。
+```
+
+上面的代码检测在邮件地址中是否含有字符串 "example"。如果有，则再次抛出异常：
+
+1. customException() 类是作为旧的 exception 类的一个扩展来创建的。这样它就继承了旧的 exception 类的所有属性和方法。
+2. 创建 errorMessage() 函数。如果 e-mail 地址不合法，则该函数返回一个错误消息。
+3. 把 $email 变量设置为一个字符串，该字符串是一个有效的 e-mail 地址，但包含字符串 "example"。
+4. "try" 代码块包含另一个 "try" 代码块，这样就可以再次抛出异常。
+5. 由于 e-mail 包含字符串 "example"，因此触发异常。
+6. "catch" 代码块捕获到该异常，并重新抛出 "customException"。
+7. 捕获到 "customException"，并显示一条错误消息。
+
+如果在当前的 "try" 代码块中异常没有被捕获，则它将在更高层级上查找 catch 代码块。
+
+
+
+### 设置顶层异常处理器
+
+set_exception_handler() 函数可设置处理所有未捕获异常的用户定义函数。
+
+```php
+function myException($exception) {
+    echo "<b>Exception:</b> ", $exception -> getMessage();
+}
+
+set_exception_handler('myException');
+
+throw new Exception('Uncaught Exception occurred');
+```
+
+结果：
+
+```
+Exception: Uncaught Exception occurred
+```
+
+在上面的代码中，不存在 "catch" 代码块，而是触发顶层的异常处理程序。应该使用此函数来捕获所有未被捕获的异常。
+
+
+
+### 异常的规则
+
+- 要进行异常处理的代码应该放入 try 代码块内，以便捕获潜在的异常。
+- 每个 try 或 throw 代码块必须至少拥有一个对应的 catch 代码块。
+- 使用多个 catch 代码块可以捕获不同种类的异常。
+- 可以在 try 代码块内的 catch 代码块中抛出（再次抛出）异常。
+
+简而言之：如果抛出了异常，就必须捕获它。
+
+
+
+---
+
+
+
+## 关于错误和异常的理解
+
+- PHP中什么是异常：程序在运行中出现不符合预期的情况，允许发生（你也不想让他出现不正常的情况）但他是一种不正常的情况，按照我们的正常逻辑本不该出的错误，但仍然会出现的错误，属于逻辑和业务流程的错误，而不是编译或者语法上的错误。
+- PHP中什么是错误：属于php脚本自身的问题，大部分情况是由错误的语法，服务器环境导致，使得编译器无法通过检查，甚至无法运行的情况。warning、notice都是错误，只是他们的级别不同而已，并且错误是不能被try-catch捕获的。
+- 异常和错误的说法在不同的语言有不同的说法。
+- PHP7 开始，Error 与 Exception 都是继承自 Throwable。从 Throwable 的继承关系，可以看到 Error 与 Exception 是平级的关系。
+
 
 
