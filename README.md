@@ -4643,3 +4643,722 @@ Exception: Uncaught Exception occurred
 
 
 
+---
+
+## Composer 使用
+
+
+Composer 是 PHP 的一个依赖管理工具。我们可以在项目中声明所依赖的外部工具库，Composer 会帮你安装这些依赖的库文件，有了它，我们就可以很轻松的使用一个命令将其他人的优秀代码引用到我们的项目中来。
+
+![The Composer Official Logo: a male orchestra conductor with both arms in the air and his head tilted down, reading music sheets](https://getcomposer.org/img/logo-composer-transparent2.png)
+
+官网地址：https://getcomposer.org/
+
+安装：
+
+```sh
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+composer --version
+```
+
+
+
+要使用 Composer，我们需要先在项目的目录下创建一个 composer.json 文件，文件描述了项目的依赖关系。
+
+文件格式如下：
+
+```json
+{
+    "require": {
+        "monolog/monolog": "2.0.*"
+    }
+}
+```
+
+以上文件说明我们需要下载从 1.2 开始的任何版本的 monolog。
+
+接下来只要运行以下命令即可安装依赖包：
+
+```sh
+composer install
+```
+
+
+
+
+---
+
+## Docekr 基础入门
+
+### 介绍
+
+Docker 是一个开源的应用容器引擎，基于 Go 语言 并遵从 Apache2.0 协议开源。Docker 可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的 Linux 机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口（类似 iPhone 的 app）,更重要的是容器性能开销极低。
+
+官网：https://www.docker.com/
+
+
+
+### docker应用场景
+
+- Web 应用的自动化打包和发布。
+- 自动化测试和持续集成、发布。
+- 在服务型环境中部署和调整数据库或其他的后台应用。
+
+![img](https://img-blog.csdn.net/20180930171952901?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2hhb3hpbjk2Mw==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+
+
+
+![img](https://codeantenna.com/image/https://imgconvert.csdnimg.cn/aHR0cHM6Ly9hc3NldHMucHJvY2Vzc29uLmNvbS9jaGFydF9pbWFnZS9pZC81YzBmOWVlN2U0YjAyM2Y2ZGYzZTdmMDkucG5n?x-oss-process=image/format,png)
+
+
+
+### Docker 架构
+
+![Docker Architecture Diagram](https://docs.docker.com/engine/images/architecture.svg)
+
+### Docker 包括三个基本概念
+
+- **镜像（Image）**：Docker 镜像（Image），就相当于是一个 root 文件系统。比如官方镜像 ubuntu:16.04 就包含了完整的一套 Ubuntu16.04 最小系统的 root 文件系统。
+- **容器（Container）**：镜像（Image）和容器（Container）的关系，就像是面向对象程序设计中的类和实例一样，镜像是静态的定义，容器是镜像运行时的实体。容器可以被创建、启动、停止、删除、暂停等。
+- **仓库（Repository）**：仓库可看成一个代码控制中心，用来保存镜像。
+
+Docker 使用客户端-服务器 (C/S) 架构模式，使用远程API来管理和创建Docker容器。
+
+Docker 容器通过 Docker 镜像来创建。
+
+容器与镜像的关系类似于面向对象编程中的对象与类。
+
+
+
+---
+
+
+
+## Docker Hello World
+
+- 安装 docker：
+
+https://docs.docker.com/desktop/mac/install/
+
+![image-20220109071614772](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220109071615.png)
+
+![Docker Quick Start tutorial](https://docs.docker.com/desktop/mac/images/docker-tutorial-mac.png)
+
+- 查询 docker 版本信息：
+
+```shell
+$ docker version
+Client:
+ Cloud integration: v1.0.22
+ Version:           20.10.11
+ API version:       1.41
+ Go version:        go1.16.10
+ Git commit:        dea9396
+ Built:             Thu Nov 18 00:36:09 2021
+ OS/Arch:           darwin/arm64
+ Context:           default
+ Experimental:      true
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          20.10.11
+  API version:      1.41 (minimum version 1.12)
+  Go version:       go1.16.9
+  Git commit:       847da18
+  Built:            Thu Nov 18 00:34:44 2021
+  OS/Arch:          linux/arm64
+  Experimental:     false
+ containerd:
+  Version:          1.4.12
+  GitCommit:        7b11cfaabd73bb80907dd23182b9347b4245eb5d
+ runc:
+  Version:          1.0.2
+  GitCommit:        v1.0.2-0-g52b36a2
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+```
+
+
+
+- hello-world
+
+```shell
+$ docker run hello-world
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (arm64v8)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+```
+
+步骤：
+
+
+
+### 做一些测试
+
+```shell
+$ docker run -it ubuntu bash
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+5f3d23ccb99f: Pull complete
+Digest: sha256:b5a61709a9a44284d88fb12e5c48db0409cfad5b69d4ff8224077c57302df9cf
+Status: Downloaded newer image for ubuntu:latest
+root@244b803a52db:/#
+```
+
+Docker 允许你在容器内运行应用程序， 使用 **docker run** 命令来在容器内运行一个应用程序。
+
+```shell
+docker run -it ubuntu /bin/echo 'Hello world'
+```
+
+各个参数解析：
+
+- **docker:** Docker 的二进制执行文件。
+- **run:** 与前面的 docker 组合来运行一个容器。
+- **ubuntu** 指定要运行的镜像，Docker 首先从本地主机上查找镜像是否存在，如果不存在，Docker 就会从镜像仓库 Docker Hub 下载公共镜像。
+- **/bin/echo "Hello world":** 在启动的容器里执行的命令
+
+以上命令完整的意思可以解释为：Docker 以 ubuntu 镜像创建一个新容器，然后在容器里执行 bin/echo "Hello world"，然后输出结果。
+
+过 docker 的两个参数 -i -t，让 docker 运行的容器实现**"对话"**的能力：
+
+- **-t:** 在新容器内指定一个伪终端或终端。
+- **-i:** 允许你对容器内的标准输入 (STDIN) 进行交互。
+
+可以通过运行 exit 命令或者使用 CTRL+D 来退出容器。
+
+
+
+---
+
+## 启动和关闭容器
+
+使用以下命令创建一个以进程方式运行的容器：
+
+```shell
+docker run -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
+f4236a568876c19e93886dea6078ac0e70df636ec39f26a4404804084f32ae1f
+```
+
+`f4236a568876c19e93886dea6078ac0e70df636ec39f26a4404804084f32ae1f` 这个长字符串叫做容器 ID，对每个容器来说都是唯一的。
+
+我们需要确认容器有在运行，可以通过 **docker ps** 来查看：
+
+```shell
+$ docker ps
+CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS     NAMES
+f4236a568876   ubuntu    "/bin/sh -c 'while t…"   3 minutes ago   Up 3 minutes             nice_carver
+```
+
+**CONTAINER ID:** 容器 ID。
+
+**IMAGE:** 使用的镜像。
+
+**COMMAND:** 启动容器时运行的命令。
+
+**CREATED:** 容器的创建时间。
+
+**STATUS:** 容器状态。
+
+状态有7种：
+
+- created（已创建）
+- restarting（重启中）
+- running 或 Up（运行中）
+- removing（迁移中）
+- paused（暂停）
+- exited（停止）
+- dead（死亡）
+
+**PORTS:** 容器的端口信息和使用的连接类型（tcp\udp）。
+
+**NAMES:** 自动分配的容器名称。
+
+在宿主主机内使用 **docker logs** 命令，查看容器内的标准输出：
+
+```shell
+$ docker logs f4236a568876
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+```
+
+或者使用 `docker logs nice_carver`。
+
+停止容器：
+
+```shell
+$ docker ps
+CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS     NAMES
+f4236a568876   ubuntu    "/bin/sh -c 'while t…"   7 minutes ago   Up 6 minutes             nice_carver
+$ docker stop f4236a568876
+f4236a568876
+$ docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+$ docker ps -a
+CONTAINER ID   IMAGE                         COMMAND                  CREATED          STATUS                        PORTS                                                                                                                            NAMES
+f4236a568876   ubuntu                        "/bin/sh -c 'while t…"   7 minutes ago    Exited (137) 11 seconds ago                                                                                                                                    nice_carver
+```
+
+
+
+## Docker容器使用
+
+### 查看帮助信息
+
+直接输入 docker 命令来查看到 Docker 客户端的所有命令选项：
+
+![image-20220109080437987](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220109080438.png)
+
+可以通过命令 **docker command --help** 更深入的了解指定的 Docker 命令使用方法。
+
+例如我们要查看 **docker stats** 指令的具体使用方法：
+
+```shell
+$ docker stats --help
+
+Usage:  docker stats [OPTIONS] [CONTAINER...]
+
+Display a live stream of container(s) resource usage statistics
+
+Options:
+  -a, --all             Show all containers (default shows just running)
+      --format string   Pretty-print images using a Go template
+      --no-stream       Disable streaming stats and only pull the first result
+      --no-trunc        Do not truncate output
+```
+
+
+
+### 获取镜像
+
+如果我们本地没有 ubuntu 镜像，我们可以使用 docker pull 命令来载入 ubuntu 镜像：
+
+```shell
+$ docker pull ubuntu
+```
+
+
+
+### 启动容器
+
+以下命令使用 ubuntu 镜像启动一个容器，参数为以命令行模式进入该容器：
+
+```shell
+$ docker run -it ubuntu /bin/bash
+```
+
+参数说明：
+
+- **-i**: 交互式操作。
+- **-t**: 终端。
+- **ubuntu**: ubuntu 镜像。
+- **/bin/bash**：放在镜像名后的是命令，这里我们希望有个交互式 Shell，因此用的是 /bin/bash。
+
+要退出终端，直接输入 `exit`。
+
+
+
+### 启动已停止的容器
+
+查看所有的容器命令如下：
+
+```shell
+$ docker ps -a
+```
+
+![image-20220109081323078](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220109081323.png)
+
+使用 docker start 启动一个已停止的容器：
+
+```shell
+$ docker start b750bbbcfd88 
+```
+
+
+
+### 后台运行
+
+在大部分的场景下，我们希望 docker 的服务是在后台运行的，我们可以过 **-d** 指定容器的运行模式。
+
+```shell
+$ docker run -itd --name ubuntu-test ubuntu /bin/bash
+```
+
+
+
+### 停止容器
+
+```shell
+$ docker stop <容器 ID>
+```
+
+停止的容器可以通过 docker restart 重启：
+
+```shell
+$ docker restart <容器 ID>
+```
+
+
+
+### 进入容器
+
+在使用 **-d** 参数时，容器启动后会进入后台。此时想要进入容器，可以通过以下指令进入：
+
+- **docker attach**
+- **docker exec**：推荐大家使用 docker exec 命令，因为此退出容器终端，不会导致容器的停止。
+
+```shell
+$ docker exec -it 243c32535da7 /bin/bash
+```
+
+
+
+### 删除容器
+
+```shell
+$ docker rm -f 1e560fca3906
+```
+
+
+
+### 清理掉所有处于终止状态的容器
+
+```shell
+$ docker container prune
+```
+
+
+
+### 运行一个WEB应用
+
+前面我们运行的容器并没有一些什么特别的用处。接下来让我们尝试使用 docker 构建一个 web 应用程序。我们将在docker容器中运行一个 Python Flask 应用来运行一个web应用。
+
+```shell
+$ docker pull training/webapp
+$ docker run -d -P training/webapp python app.py
+5153dca5276a0bdffd6de7050519803a70c1a2e0d7aff8887809510c590b27c9
+$ docker ps
+CONTAINER ID   IMAGE             COMMAND           CREATED          STATUS          PORTS                     NAMES
+5153dca5276a   training/webapp   "python app.py"   11 seconds ago   Up 10 seconds   0.0.0.0:55000->5000/tcp   interesting_jackson
+```
+
+- `- p`：将容器内部使用的网络端口随机映射到我们使用的主机上。
+
+Docker 开放了 5000 端口（默认 Python Flask 端口）映射到主机端口 55000 上。这时我们可以通过浏览器访问WEB应用。
+
+![image-20220109082520374](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220109082520.png)
+
+我们也可以通过 -p 参数来设置不一样的端口：
+
+```shell
+docker run -d -p 5001:5000 training/webapp python app.py
+```
+
+容器内部的 5000 端口映射到我们本地主机的 5001 端口上。
+
+
+
+### 网络端口的快捷方式
+
+通过 **docker ps** 命令可以查看到容器的端口映射，**docker** 还提供了另一个快捷方式 **docker port**，使用 **docker port** 可以查看指定 （ID 或者名字）容器的某个确定端口映射到宿主机的端口号。
+
+```shell
+$ docker port 37a8db18b193
+5000/tcp -> 0.0.0.0:5001
+```
+
+
+
+### 查看web应用程序日志
+
+docker logs [ID或者名字] 可以查看容器内部的标准输出。
+
+```shell
+ $ docker logs -f 37a8db18b193
+ * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+172.17.0.1 - - [09/Jan/2022 00:31:55] "GET / HTTP/1.1" 200 -
+172.17.0.1 - - [09/Jan/2022 00:31:55] "GET /favicon.ico HTTP/1.1" 404 -
+172.17.0.1 - - [09/Jan/2022 00:36:30] "GET / HTTP/1.1" 200 -
+172.17.0.1 - - [09/Jan/2022 00:36:30] "GET / HTTP/1.1" 200 -
+172.17.0.1 - - [09/Jan/2022 00:36:34] "GET / HTTP/1.1" 200 -
+```
+
+`-f`: 让 **docker logs** 像使用 **tail -f** 一样来输出容器内部的标准输出。
+
+从上面，我们可以看到应用程序使用的是 5000 端口并且能够查看到应用程序的访问日志。
+
+
+
+### 查看web应用程序进程
+
+我们还可以使用 docker top 来查看容器内部运行的进程：
+
+```shell
+$ docker top 37a8db18b193
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                17026               16999               0                   00:31               ?                   00:00:00            /usr/bin/qemu-x86_64 /usr/bin/python app.py
+```
+
+
+
+### 检查web应用程序
+
+使用 **docker inspect** 来查看 Docker 的底层信息。它会返回一个 JSON 文件记录着 Docker 容器的配置和状态信息。
+
+![image-20220109084053266](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220109084053.png)
+
+
+
+
+
+---
+
+
+
+## Docker镜像使用
+
+当运行容器时，使用的镜像如果在本地中不存在，docker 就会自动从 docker 镜像仓库中下载，默认是从 Docker Hub 公共镜像源下载。
+
+### 列出本地所有镜像
+
+```shell
+$ docker images
+REPOSITORY                   TAG          IMAGE ID       CREATED         SIZE
+sail-8.1/app                 latest       59fd205dffe1   14 hours ago    728MB
+laradock_php-fpm             latest       8107d8880a21   22 hours ago    757MB
+laradock_workspace           latest       6e328e045950   22 hours ago    1.21GB
+laradock_nginx               latest       542703c4471a   22 hours ago    29.7MB
+laradock_mysql               latest       c07e4bfe0a35   22 hours ago    516MB
+ubuntu                       latest       9f4877540c73   47 hours ago    65.6MB
+laradock_phpmyadmin          latest       c066483dbf27   2 weeks ago     492MB
+laradock_redis               latest       505a3277cca0   2 weeks ago     107MB
+selenium/standalone-chrome   latest       4058d7d7e87f   3 weeks ago     1.19GB
+laravelsail/php81-composer   latest       b43378ff1fca   5 weeks ago     493MB
+redis                        alpine       5d44f444e409   5 weeks ago     32.4MB
+getmeili/meilisearch         latest       d9d9cb7a7c66   7 weeks ago     64.7MB
+mysql/mysql-server           8.0          087c6f86492c   8 weeks ago     509MB
+hello-world                  latest       18e5af790473   3 months ago    9.14kB
+docker                       19.03-dind   cf089d844e8e   5 months ago    217MB
+mailhog/mailhog              latest       4de68494cd0d   17 months ago   392MB
+ubuntu                       15.10        9b9cb95443b5   5 years ago     137MB
+training/webapp              latest       6fae60ef3446   6 years ago     349MB
+```
+
+各个选项说明:
+
+- **REPOSITORY：**表示镜像的仓库源
+- **TAG：**镜像的标签
+- **IMAGE ID：**镜像ID
+- **CREATED：**镜像创建时间
+- **SIZE：**镜像大小
+
+同一仓库源可以有多个 TAG，代表这个仓库源的不同个版本，如 ubuntu 仓库源里，有 15.10、14.04 等多个不同的版本，我们使用 REPOSITORY:TAG 来定义不同的镜像。
+
+所以，我们如果要使用版本为15.10的ubuntu系统镜像来运行容器时，命令如下：
+
+```shell
+$ docker run -t -i ubuntu:15.10 /bin/bash
+```
+
+
+
+### 获取一个新镜像
+
+当我们在本地主机上使用一个不存在的镜像时 Docker 就会自动下载这个镜像。如果我们想预先下载这个镜像，我们可以使用 docker pull 命令来下载它。
+
+```shell
+$ docker pull ubuntu:13.10
+13.10: Pulling from library/ubuntu
+6599cadaf950: Pull complete 
+23eda618d451: Pull complete 
+f0be3084efe9: Pull complete 
+52de432f084b: Pull complete 
+a3ed95caeb02: Pull complete 
+Digest: sha256:15b79a6654811c8d992ebacdfbd5152fcf3d165e374e264076aa435214a947a3
+Status: Downloaded newer image for ubuntu:13.10
+```
+
+
+
+### 查找镜像
+
+我们可以从 Docker Hub 网站来搜索镜像，Docker Hub 网址为： **https://hub.docker.com/**
+
+我们也可以使用 docker search 命令来搜索镜像。比如我们需要一个 httpd 的镜像来作为我们的 web 服务。我们可以通过 docker search 命令搜索 httpd 来寻找适合我们的镜像。
+
+```shell
+$ docker search httpd
+NAME                                    DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+httpd                                   The Apache HTTP Server Project                  3824      [OK]
+centos/httpd-24-centos7                 Platform for running Apache httpd 2.4 or bui…   41
+centos/httpd                                                                            34                   [OK]
+arm64v8/httpd                           The Apache HTTP Server Project                  8
+polinux/httpd-php                       Apache with PHP in Docker (Supervisor, CentO…   5                    [OK]
+hypoport/httpd-cgi                      httpd-cgi                                       2                    [OK]
+solsson/httpd-openidc                   mod_auth_openidc on official httpd image, ve…   2                    [OK]
+inanimate/httpd-ssl                     A play container with httpd, ssl enabled, an…   1                    [OK]
+publici/httpd                           httpd:latest                                    1                    [OK]
+clearlinux/httpd                        httpd HyperText Transfer Protocol (HTTP) ser…   1
+jonathanheilmann/httpd-alpine-rewrite   httpd:alpine with enabled mod_rewrite           1                    [OK]
+dockerpinata/httpd                                                                      1
+manageiq/httpd                          Container with httpd, built on CentOS for Ma…   1                    [OK]
+dariko/httpd-rproxy-ldap                Apache httpd reverse proxy with LDAP authent…   1                    [OK]
+lead4good/httpd-fpm                     httpd server which connects via fcgi proxy h…   1                    [OK]
+centos/httpd-24-centos8                                                                 1
+interlutions/httpd                      httpd docker image with debian-based config …   0                    [OK]
+appertly/httpd                          Customized Apache HTTPD that uses a PHP-FPM …   0                    [OK]
+e2eteam/httpd                                                                           0
+amd64/httpd                             The Apache HTTP Server Project                  0
+19022021/httpd-connection_test          This httpd image will test the connectivity …   0
+manasip/httpd                                                                           0
+manageiq/httpd_configmap_generator      Httpd Configmap Generator                       0                    [OK]
+itsziget/httpd24                        Extended HTTPD Docker image based on the off…   0                    [OK]
+ppc64le/httpd                           The Apache HTTP Server Project                  0
+```
+
+**NAME:** 镜像仓库源的名称
+
+**DESCRIPTION:** 镜像的描述
+
+**OFFICIAL:** 是否 docker 官方发布
+
+**stars:** 类似 Github 里面的 star，表示点赞、喜欢的意思。
+
+**AUTOMATED:** 自动构建。
+
+
+
+### 拉取镜像
+
+使用上面的 httpd 官方版本的镜像，使用命令 docker pull 来下载镜像。
+
+```shell
+docker pull httpd
+Using default tag: latest
+latest: Pulling from library/httpd
+8b87079b7a06: Pulling fs layer 
+a3ed95caeb02: Download complete 
+0d62ec9c6a76: Download complete 
+a329d50397b9: Download complete 
+ea7c1f032b5c: Waiting 
+be44112b72c7: Waiting
+```
+
+拉取镜像之后可以基于镜像运行容器。
+
+
+
+### 删除镜像
+
+镜像删除使用 **docker rmi** 命令，比如我们删除 hello-world 镜像：
+
+```shell
+$ docker rmi hello-world
+```
+
+
+
+### 删除所有镜像
+
+```shell
+docker rmi $(docker images -q)
+```
+
+
+
+### Docker Compose
+
+Compose 是用于定义和运行多容器 Docker 应用程序的工具。通过 Compose，您可以使用 YML 文件来配置应用程序需要的所有服务。然后，使用一个命令，就可以从 YML 文件配置中创建并启动所有服务。
+
+Compose 使用的三个步骤：
+
+- 使用 Dockerfile 定义应用程序的环境。
+- 使用 docker-compose.yml 定义构成应用程序的服务，这样它们可以在隔离环境中一起运行。
+- 最后，执行 docker-compose up 命令来启动并运行整个应用程序。
+
+
+
+---
+
+## laravel 框架入门
+
+官网地址：https://laravel.com/
+
+在构建 Web 应用程序时，有多种工具和框架可供使用。Laravel 是构建现代全栈 Web 应用程序的最佳选择。
+
+![image-20220115225014807](https://gitee.com/itzhouq/images/raw/master/notes/2021/20220115225015.png)
+
+Laravel Sail 是一个轻量级的命令行界面，用于与 Laravel 的默认 Docker 开发环境进行交互。
+
+
+
+### Laradock
+
+Laradock 是为 Docker 提供的完整 PHP 本地开发环境。Laradock 早期专注为 Laravel 打造 Docker 开发环境，因而最早在 Laravel 社区中出名，后来随着影响力的扩大，逐渐被 PHP 社区接纳和采用，目前支持的 PHP 项目除了 Laravel 之外，还有 Symfony、CodeIgniter、WordPress、Drupal 等等。
+
+深入了解 Laradock 之前让我们先见识下如何在 Laradock 中快速安装 Nginx、PHP、Composer、MySQL、Redis 吧，有了这些开发 Laravel 必备的工具组件也就差不离了。
+
+中文文档：https://github.com/laradock/laradock/blob/master/README-zh.md
+
+首先将 Laradock 项目代码克隆到本地：
+
+```shell
+git clone https://github.com/Laradock/laradock.git
+```
+
+进入 `laradock` 目录将 `env-example` 重命名为 `.env`：
+
+```shell
+cp env-example .env
+```
+
+构建镜像 & 启动容器：
+
+```shell
+docker-compose up -d nginx mysql redis
+```
+
+如果指定端口已经被占用，运行上述命令会报错，关闭相应的服务再重新运行上述命令即可。
+
+打开 Laravel 项目的 `.env` 文件并添加如下配置：
+
+```shell
+DB_HOST=mysql
+REDIS_HOST=redis
+QUEUE_HOST=beanstalkd
+```
+
+重启：
+
+```shell
+docker-compose down
+docker-compose up -d nginx
+```
+
+
